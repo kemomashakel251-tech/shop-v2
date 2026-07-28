@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة التحكم — دكّان</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+
+<!-- شاشة تسجيل الدخول -->
+<div class="admin-login" id="adminLoginScreen">
+  <div class="login-card">
+    <div class="brand">دكّان</div>
+    <p style="color:#6B6355; font-size:14px; margin-top:-14px; margin-bottom:24px;">لوحة تحكم صاحب المتجر</p>
+    <form id="loginForm">
+      <div class="field" style="text-align:right;">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="loginEmail" required placeholder="admin@dokkan.example">
+      </div>
+      <div class="field" style="text-align:right;">
+        <label>كلمة المرور</label>
+        <input type="password" id="loginPassword" required placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">تسجيل الدخول</button>
+      <p class="login-error" id="loginError"></p>
+    </form>
+    <p style="font-size:12px; color:#9A9182; margin-top:18px;">
+      لسه معملتش حساب Firebase Auth؟ أي بيانات هتدخلك لوضع المعاينة.
+    </p>
+  </div>
+</div>
+
+<!-- لوحة التحكم -->
+<div class="admin-shell" id="adminShell" style="display:none;">
+  <aside class="admin-sidebar">
+    <div class="brand">دكّان</div>
+    <nav class="admin-nav">
+      <button data-panel="dashboard" class="active">📊 نظرة عامة</button>
+      <button data-panel="products">🛍️ المنتجات</button>
+      <button data-panel="orders">📦 الطلبات</button>
+      <button data-panel="settings">⚙️ الإعدادات</button>
+      <a href="index.html" target="_blank" style="display:flex; align-items:center; gap:10px; color:#C9D8D4; padding:12px 14px; font-size:14px; font-weight:700;">👁️ معاينة المتجر</a>
+    </nav>
+    <div class="admin-sidebar-foot">
+      <button id="logoutBtn">تسجيل الخروج</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div id="previewBanner" style="display:none; background:#FFF1D6; color:#92610C; padding:12px 18px; border-radius:10px; font-size:13px; font-weight:700; margin-bottom:20px;">
+      ⚠️ وضع المعاينة: Firebase مش مربوط بعد، فالتعديلات هنا مش هتتحفظ فعلياً. اربط بيانات مشروعك في shared.js وadmin-core.js عشان تشتغل اللوحة كاملة.
+    </div>
+
+    <!-- نظرة عامة -->
+    <section class="admin-panel active" id="panel-dashboard">
+      <div class="admin-topbar"><h1>نظرة عامة</h1></div>
+      <div id="stockWarning" style="display:none; background:#F4DEDA; color:#C15B3E; padding:12px 18px; border-radius:10px; font-size:13px; font-weight:700; margin-bottom:20px;"></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="label">إجمالي المنتجات</div><div class="value" id="statProducts">—</div></div>
+        <div class="stat-card"><div class="label">إجمالي الطلبات</div><div class="value" id="statOrders">—</div></div>
+        <div class="stat-card"><div class="label">إجمالي الإيرادات</div><div class="value" id="statRevenue">—</div></div>
+        <div class="stat-card"><div class="label">طلبات جديدة</div><div class="value" id="statPending">—</div></div>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>رقم الطلب</th><th>العميل</th><th>الإجمالي</th><th>الحالة</th></tr></thead>
+          <tbody id="recentOrdersBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- المنتجات -->
+    <section class="admin-panel" id="panel-products">
+      <div class="admin-topbar"><h1>المنتجات</h1></div>
+      <div class="admin-toolbar">
+        <span style="color:#6B6355; font-size:14px;">إدارة كل منتجات الدكّان</span>
+        <button class="btn btn-primary" onclick="openProductModal()">+ إضافة منتج</button>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>صورة</th><th>الاسم</th><th>القسم</th><th>السعر</th><th>المخزون</th><th>إجراءات</th></tr></thead>
+          <tbody id="productsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- الطلبات -->
+    <section class="admin-panel" id="panel-orders">
+      <div class="admin-topbar"><h1>الطلبات</h1></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>رقم الطلب</th><th>العميل</th><th>العنوان</th><th>الإجمالي</th><th>الحالة</th><th></th></tr></thead>
+          <tbody id="ordersTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- الإعدادات -->
+    <section class="admin-panel" id="panel-settings">
+      <div class="admin-topbar"><h1>الإعدادات</h1></div>
+      <div class="form-card" style="max-width:520px;">
+        <form id="settingsForm">
+          <div class="field">
+            <label>اسم المتجر</label>
+            <input type="text" id="setStoreName" required>
+          </div>
+          <div class="field">
+            <label>رقم واتساب المتجر (بالكود الدولي، مثال 20 لمصر)</label>
+            <input type="text" id="setWhatsapp" required placeholder="201000000000">
+          </div>
+          <div class="field">
+            <label>نص شعار الصفحة الرئيسية</label>
+            <textarea id="setHeroText"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">حفظ الإعدادات</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- مودال إضافة/تعديل منتج -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal-box">
+    <h3 id="productModalTitle">إضافة منتج</h3>
+    <form id="productForm">
+      <input type="hidden" id="pfId">
+      <div class="field"><label>اسم المنتج</label><input type="text" id="pfName" required></div>
+      <div class="field">
+        <label>القسم</label>
+        <select id="pfCategory">
+          <option>بقالة</option><option>منزل</option><option>أزياء</option><option>عناية</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div class="field" style="flex:1;"><label>السعر الحالي</label><input type="number" id="pfPrice" required></div>
+        <div class="field" style="flex:1;"><label>السعر قبل الخصم (اختياري)</label><input type="number" id="pfOldPrice"></div>
+      </div>
+      <div class="field"><label>الكمية بالمخزون</label><input type="number" id="pfStock" required></div>
+      <div class="field"><label>رابط الصورة</label><input type="url" id="pfImage" required placeholder="https://..."></div>
+      <div class="field"><label>الوصف</label><textarea id="pfDesc"></textarea></div>
+      <div style="display:flex; gap:10px;">
+        <button type="submit" class="btn btn-primary" style="flex:1;">حفظ</button>
+        <button type="button" class="btn btn-dark" onclick="closeProductModal()" style="flex:1;">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/shared.js"></script>
+<script src="js/admin-core.js"></script>
+<script src="js/admin-products.js"></script>
+<script src="js/admin-orders.js"></script>
+<script src="js/admin-dashboard.js"></script>
+<script src="js/admin-settings.js"></script>
+<script src="js/admin-init.js"></script>
+</body>
+</html>

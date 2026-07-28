@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تفاصيل المنتج — دكّان</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">دكّان <span>SOUQ EL-HARA</span></a>
+    <div class="header-actions">
+      <a href="admin.html" class="icon-btn" title="لوحة التحكم" style="font-size:14px;">الإدارة</a>
+      <button class="icon-btn" onclick="openCart()" title="السلة">🛒<span class="cart-count">0</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="container" id="pdWrap">
+  <div class="product-detail" id="pdContent">
+    <div class="empty-state">جاري تحميل المنتج...</div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom">© 2026 دكّان. جميع الحقوق محفوظة.</div>
+  </div>
+</footer>
+
+<div class="overlay" id="cartOverlay" onclick="closeCart()"></div>
+<aside class="cart-drawer" id="cartDrawer">
+  <div class="cart-head">
+    <h3>سلة المشتريات</h3>
+    <button class="cart-close" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot">
+    <div class="cart-total-row"><span>الإجمالي</span><span id="cartTotal">0 ج.م</span></div>
+    <a href="checkout.html" class="btn btn-primary btn-block">إتمام الطلب</a>
+  </div>
+</aside>
+
+<script src="js/shared.js"></script>
+<script>
+async function loadProduct() {
+  const id = new URLSearchParams(location.search).get("id");
+  const p = await fetchProduct(id);
+  const wrap = document.getElementById("pdContent");
+
+  if (!p) {
+    wrap.innerHTML = `<div class="empty-state">المنتج ده مش موجود. <a href="index.html" style="color:var(--ink); font-weight:700;">ارجع للمتجر</a></div>`;
+    return;
+  }
+
+  document.title = p.name + " — دكّان";
+  wrap.innerHTML = `
+    <div class="pd-gallery"><img src="${p.image}" alt="${p.name}"></div>
+    <div>
+      <span class="pd-cat">${p.category}</span>
+      <h1 class="pd-title">${p.name}</h1>
+      <div class="pd-price">
+        ${p.oldPrice ? `<span class="price-old" style="font-size:18px;">${fmtPrice(p.oldPrice)}</span> ` : ""}
+        ${fmtPrice(p.price)}
+      </div>
+      <span class="stock-badge ${p.stock > 0 ? 'in' : 'out'}">${p.stock > 0 ? `متوفر (${p.stock} قطعة)` : "غير متوفر حالياً"}</span>
+      <p class="pd-desc" style="margin-top:18px;">${p.desc || ""}</p>
+      <div class="pd-qty-row">
+        <div class="qty-control" style="border:1.5px solid var(--line); border-radius:10px; padding:4px 10px;">
+          <button onclick="changeQty(-1)">−</button>
+          <span id="pdQty">1</span>
+          <button onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" ${p.stock === 0 ? "disabled style='opacity:.4'" : ""}
+        onclick='addToCart(${JSON.stringify(p)}, window.__pdQty || 1); openCart();'>
+        أضف للسلة
+      </button>
+    </div>
+  `;
+}
+
+window.__pdQty = 1;
+function changeQty(delta) {
+  window.__pdQty = Math.max(1, (window.__pdQty || 1) + delta);
+  document.getElementById("pdQty").textContent = window.__pdQty;
+}
+
+loadProduct();
+</script>
+</body>
+</html>

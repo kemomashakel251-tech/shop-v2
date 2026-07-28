@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إتمام الطلب — دكّان</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">دكّان <span>SOUQ EL-HARA</span></a>
+    <div class="header-actions">
+      <a href="index.html" class="icon-btn" style="font-size:14px;">← رجوع للمتجر</a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div id="checkoutView">
+    <div class="checkout-grid">
+      <div class="form-card">
+        <h3>بيانات التوصيل</h3>
+        <form id="orderForm">
+          <div class="field">
+            <label>الاسم بالكامل</label>
+            <input type="text" id="custName" required placeholder="مثال: أحمد علي">
+          </div>
+          <div class="field">
+            <label>رقم الموبايل</label>
+            <input type="tel" id="custPhone" required placeholder="01000000000" pattern="^01[0-9]{9}$">
+          </div>
+          <div class="field">
+            <label>العنوان بالتفصيل</label>
+            <textarea id="custAddress" required placeholder="المحافظة، المنطقة، الشارع، رقم العمارة..."></textarea>
+          </div>
+          <div class="field">
+            <label>ملاحظات (اختياري)</label>
+            <textarea id="custNotes" placeholder="أي تفاصيل إضافية عن الطلب أو التوصيل"></textarea>
+          </div>
+
+          <h3 style="margin-top:24px;">طريقة الدفع</h3>
+          <div class="pay-options" id="payOptions">
+            <label class="pay-option selected">
+              <input type="radio" name="pay" value="cod" checked style="accent-color:var(--ink)">
+              💵 الدفع عند الاستلام
+            </label>
+            <label class="pay-option">
+              <input type="radio" name="pay" value="whatsapp" style="accent-color:var(--ink)">
+              💬 تأكيد الطلب عبر واتساب
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" style="margin-top:24px;">تأكيد الطلب</button>
+        </form>
+      </div>
+
+      <div class="summary-card">
+        <h3>ملخص الطلب</h3>
+        <div id="summaryItems"></div>
+        <div class="summary-line"><span>المنتجات</span><span id="sumSubtotal">0 ج.م</span></div>
+        <div class="summary-line"><span>التوصيل</span><span>مجاني</span></div>
+        <div class="summary-line total"><span>الإجمالي</span><span id="sumTotal">0 ج.م</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="successView" style="display:none;">
+    <div class="order-success">
+      <div class="stamp-big">✓</div>
+      <h2 style="font-family:var(--font-display); color:var(--ink); font-size:30px;">تم استلام طلبك!</h2>
+      <p style="color:#6B6355; margin-bottom:24px;">رقم طلبك هو <strong id="orderIdText">—</strong>. هنتواصل معاك على رقم الموبايل لتأكيد التوصيل.</p>
+      <a href="index.html" class="btn btn-dark">الرجوع للمتجر</a>
+      <a id="waLink" href="#" target="_blank" class="btn btn-primary" style="display:none; margin-right:10px;">تأكيد عبر واتساب</a>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="container"><div class="footer-bottom">© 2026 دكّان. جميع الحقوق محفوظة.</div></div>
+</footer>
+
+<script src="js/shared.js"></script>
+<script>
+function renderSummary() {
+  const cart = getCart();
+  document.getElementById("summaryItems").innerHTML = cart.map(i => `
+    <div class="summary-line"><span>${i.name} × ${i.qty}</span><span>${fmtPrice(i.price * i.qty)}</span></div>
+  `).join("") || `<p style="color:#9A9182; font-size:14px;">السلة فاضية.</p>`;
+  document.getElementById("sumSubtotal").textContent = fmtPrice(cartTotal());
+  document.getElementById("sumTotal").textContent = fmtPrice(cartTotal());
+}
+
+document.getElementById("payOptions").addEventListener("click", (e) => {
+  const label = e.target.closest(".pay-option");
+  if (!label) return;
+  document.querySelectorAll(".pay-option").forEach(l => l.classList.remove("selected"));
+  label.classList.add("selected");
+});
+
+document.getElementById("orderForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const cart = getCart();
+  if (cart.length === 0) { alert("السلة فاضية، رجّع للمتجر واختار منتجات الأول."); return; }
+
+  const order = {
+    customerName: document.getElementById("custName").value,
+    customerPhone: document.getElementById("custPhone").value,
+    address: document.getElementById("custAddress").value,
+    notes: document.getElementById("custNotes").value,
+    paymentMethod: document.querySelector('input[name="pay"]:checked').value,
+    items: cart,
+    total: cartTotal(),
+    status: "جديد",
+    createdAt: new Date().toISOString()
+  };
+
+  let orderId = "DK-" + Date.now().toString().slice(-6);
+
+  if (firebaseReady && db) {
+    try {
+      const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      const docRef = await addDoc(collection(db, "orders"), { ...order, createdAt: serverTimestamp() });
+      orderId = docRef.id;
+    } catch (err) {
+      console.error("فشل حفظ الطلب في Firestore:", err);
+    }
+  }
+
+  document.getElementById("checkoutView").style.display = "none";
+  document.getElementById("successView").style.display = "block";
+  document.getElementById("orderIdText").textContent = orderId;
+
+  if (order.paymentMethod === "whatsapp") {
+    const msg = encodeURIComponent(
+      `طلب جديد من دكّان #${orderId}\nالاسم: ${order.customerName}\nالموبايل: ${order.customerPhone}\nالعنوان: ${order.address}\nالإجمالي: ${fmtPrice(order.total)}`
+    );
+    const waLink = document.getElementById("waLink");
+    waLink.href = `https://wa.me/201000000000?text=${msg}`;
+    waLink.style.display = "inline-flex";
+  }
+
+  localStorage.removeItem("dokkan_cart");
+  updateCartBadge();
+});
+
+renderSummary();
+</script>
+</body>
+</html>

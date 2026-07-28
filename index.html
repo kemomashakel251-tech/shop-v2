@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكّان — سوق الحارة الإلكتروني</title>
+<meta name="description" content="دكّان: منتجات محلية أصيلة توصلك لبيتك">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">دكّان <span>SOUQ EL-HARA</span></a>
+    <div class="header-actions">
+      <a href="admin.html" class="icon-btn" title="لوحة التحكم" style="font-size:14px;">الإدارة</a>
+      <button class="icon-btn" onclick="openCart()" title="السلة">
+        🛒<span class="cart-count">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container hero-inner">
+    <div>
+      <span class="hero-eyebrow">طازة من الدكّان لحد باب البيت</span>
+      <h1>كل يوم في دكّانك<br>حاجة جديدة تستاهل</h1>
+      <p>منتجات محلية أصيلة، من البقالة للأزياء للعناية، مختارة بعناية وتوصلك في نفس اليوم.</p>
+      <div style="display:flex; gap:14px; flex-wrap:wrap;">
+        <a href="#shop" class="btn btn-primary">تسوّق دلوقتي</a>
+        <a href="#categories" class="btn btn-outline">استكشف الأقسام</a>
+      </div>
+    </div>
+    <div class="hero-mosaic">
+      <div><img src="https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=500" alt=""></div>
+      <div><img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=500" alt=""></div>
+      <div><img src="https://images.unsplash.com/photo-1506617420156-8e4536971650?w=500" alt=""></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="categories">
+  <div class="container">
+    <div class="category-row" id="categoryRow">
+      <button class="category-pill active" data-cat="الكل">الكل</button>
+      <button class="category-pill" data-cat="بقالة">بقالة</button>
+      <button class="category-pill" data-cat="منزل">منزل</button>
+      <button class="category-pill" data-cat="أزياء">أزياء</button>
+      <button class="category-pill" data-cat="عناية">عناية</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="shop">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">مختارات الدكّان</span>
+        <h2>منتجاتنا</h2>
+      </div>
+    </div>
+    <div class="product-grid" id="productGrid">
+      <div class="empty-state">جاري تحميل المنتجات...</div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h4 class="brand" style="font-size:22px;">دكّان</h4>
+        <p style="max-width:32ch; font-size:14px;">سوق الحارة الإلكتروني — منتجات محلية، توصيل سريع، وثقة من أول طلب.</p>
+      </div>
+      <div>
+        <h4>روابط</h4>
+        <ul>
+          <li><a href="index.html">الرئيسية</a></li>
+          <li><a href="checkout.html">السلة والدفع</a></li>
+          <li><a href="admin.html">لوحة التحكم</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>تواصل معنا</h4>
+        <ul>
+          <li>واتساب: 01000000000</li>
+          <li>البريد: info@dokkan.example</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 دكّان. جميع الحقوق محفوظة.</div>
+  </div>
+</footer>
+
+<div class="overlay" id="cartOverlay" onclick="closeCart()"></div>
+<aside class="cart-drawer" id="cartDrawer">
+  <div class="cart-head">
+    <h3>سلة المشتريات</h3>
+    <button class="cart-close" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot">
+    <div class="cart-total-row"><span>الإجمالي</span><span id="cartTotal">0 ج.م</span></div>
+    <a href="checkout.html" class="btn btn-primary btn-block">إتمام الطلب</a>
+  </div>
+</aside>
+
+<script src="js/shared.js"></script>
+<script>
+let currentCategory = "الكل";
+let allProducts = [];
+
+function renderProducts() {
+  const grid = document.getElementById("productGrid");
+  const filtered = currentCategory === "الكل" ? allProducts : allProducts.filter(p => p.category === currentCategory);
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state">مفيش منتجات في القسم ده دلوقتي.</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => `
+    <div class="product-card">
+      <a href="product.html?id=${p.id}">
+        <div class="product-media">
+          <img src="${p.image}" alt="${p.name}">
+          <div class="price-stamp ${p.oldPrice ? 'sale' : ''}">
+            <small>ج.م</small><span>${p.price}</span>
+          </div>
+        </div>
+      </a>
+      <div class="product-body">
+        <span class="product-cat">${p.category}</span>
+        <h3 class="product-title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+        <div class="product-foot">
+          <div>
+            ${p.oldPrice ? `<span class="price-old">${fmtPrice(p.oldPrice)}</span><br>` : ""}
+            <span class="price-now">${fmtPrice(p.price)}</span>
+          </div>
+          <button class="add-btn" ${p.stock === 0 ? "disabled style='opacity:.4'" : ""}
+            onclick='addToCart(${JSON.stringify(p)}); openCart();'>+</button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+document.getElementById("categoryRow").addEventListener("click", (e) => {
+  if (!e.target.classList.contains("category-pill")) return;
+  document.querySelectorAll(".category-pill").forEach(b => b.classList.remove("active"));
+  e.target.classList.add("active");
+  currentCategory = e.target.dataset.cat;
+  renderProducts();
+});
+
+(async () => {
+  allProducts = await fetchProducts();
+  renderProducts();
+})();
+</script>
+</body>
+</html>
