@@ -8,12 +8,12 @@
    Project settings → General → Your apps → SDK setup and configuration
    ----------------------------------------------------------- */
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCdUoMyIrrkHLJ0aw8f4C9m5x5uGUCE9Dk",
+  authDomain: "matgari-530da.firebaseapp.com",
+  projectId: "matgari-530da",
+  storageBucket: "matgari-530da.firebasestorage.app",
+  messagingSenderId: "104981908529",
+  appId: "1:104981908529:web:efcee44f967e64de80d910"
 };
 
 const IS_CONFIGURED = firebaseConfig.apiKey !== "YOUR_API_KEY";
