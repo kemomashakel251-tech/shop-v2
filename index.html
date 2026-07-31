@@ -1,192 +1,105 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>أورا — تسوق أونلاين</title>
-<meta name="description" content="أورا: منتجات مختارة بعناية، جودة موثوقة، وتوصيل سريع">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>متجري — تسوق أونلاين</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div class="announce-bar">شحن مجاني للطلبات فوق 500 ج.م — دفع عند الاستلام متاح</div>
-
-<header class="site-header">
-  <div class="container">
-    <a href="index.html" class="brand">أورا</a>
-    <nav class="main-nav">
-      <a href="index.html">الرئيسية</a>
-      <a href="index.html#shop">كل المنتجات</a>
-      <a href="index.html#categories">الأقسام</a>
-    </nav>
-    <div class="header-actions">
-      <button class="icon-btn" onclick="openCart()" title="السلة">
-        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
-        <span class="cart-count">0</span>
-      </button>
-    </div>
-  </div>
-</header>
+<header id="site-header"></header>
 
 <section class="hero">
-  <div class="container hero-inner">
-    <div>
-      <span class="hero-eyebrow">تشكيلة الموسم</span>
-      <h1>تسوّق قطع مختارة<br>بعناية وجودة تدوم</h1>
-      <p>منتجات أصلية 100%، فحص جودة قبل الشحن، وتوصيل لباب بيتك في نفس الأسبوع.</p>
-      <div style="display:flex; gap:14px; flex-wrap:wrap;">
-        <a href="#shop" class="btn btn-primary">تسوّق المجموعة</a>
-        <a href="#categories" class="btn btn-outline">استعرض الأقسام</a>
-      </div>
-    </div>
-    <div class="hero-media">
-      <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800" alt="">
-    </div>
-  </div>
+  <h1>كل اللي محتاجه في مكان واحد</h1>
+  <p>اطلب أونلاين واستلم في بيتك — دفع عند الاستلام</p>
 </section>
 
-<div class="trust-bar">
-  <div class="container">
-    <div class="trust-item">
-      <svg viewBox="0 0 24 24"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-      <div><div class="t-title">شحن سريع</div><div class="t-sub">خلال 2-4 أيام عمل</div></div>
-    </div>
-    <div class="trust-item">
-      <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-      <div><div class="t-title">دفع عند الاستلام</div><div class="t-sub">ادفع لما تستلم</div></div>
-    </div>
-    <div class="trust-item">
-      <svg viewBox="0 0 24 24"><path d="M3 12l6 6L21 6"/></svg>
-      <div><div class="t-title">جودة مضمونة</div><div class="t-sub">فحص قبل الشحن</div></div>
-    </div>
-    <div class="trust-item">
-      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
-      <div><div class="t-title">استرجاع سهل</div><div class="t-sub">خلال 14 يوم</div></div>
-    </div>
-  </div>
-</div>
+<div class="categories" id="categories"></div>
 
-<section class="section" id="categories">
-  <div class="container">
-    <div class="category-row" id="categoryRow">
-      <button class="category-pill active" data-cat="الكل">الكل</button>
-      <button class="category-pill" data-cat="بقالة">بقالة</button>
-      <button class="category-pill" data-cat="منزل">منزل</button>
-      <button class="category-pill" data-cat="أزياء">أزياء</button>
-      <button class="category-pill" data-cat="عناية">عناية</button>
-    </div>
+<main>
+  <div class="grid" id="product-grid">
+    <p class="empty">جارِ تحميل المنتجات...</p>
   </div>
-</section>
+</main>
 
-<section class="section alt" id="shop">
-  <div class="container">
-    <div class="section-head">
-      <div>
-        <span class="eyebrow">مختاراتنا</span>
-        <h2>الأكثر طلباً</h2>
-      </div>
-    </div>
-    <div class="product-grid" id="productGrid">
-      <div class="empty-state">جاري تحميل المنتجات...</div>
-    </div>
-  </div>
-</section>
+<footer>© <span id="year"></span> متجري — جميع الحقوق محفوظة</footer>
 
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-grid">
-      <div>
-        <div class="brand">أورا</div>
-        <p>منتجات مختارة بعناية، جودة موثوقة، وخدمة عملاء بترد بسرعة.</p>
-      </div>
-      <div>
-        <h4>تسوق</h4>
-        <ul>
-          <li><a href="index.html">الرئيسية</a></li>
-          <li><a href="checkout.html">السلة والدفع</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>سياسات</h4>
-        <ul>
-          <li><a href="#">سياسة الخصوصية</a></li>
-          <li><a href="#">سياسة الاسترجاع</a></li>
-          <li><a href="#">الشحن والتوصيل</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>تواصل معنا</h4>
-        <ul>
-          <li>واتساب: 01000000000</li>
-          <li>info@aura.example</li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">© 2026 أورا. جميع الحقوق محفوظة.</div>
-  </div>
-</footer>
-
-<div class="overlay" id="cartOverlay" onclick="closeCart()"></div>
-<aside class="cart-drawer" id="cartDrawer">
-  <div class="cart-head">
-    <h3>سلة المشتريات</h3>
-    <button class="cart-close" onclick="closeCart()">✕</button>
-  </div>
-  <div class="cart-items" id="cartItems"></div>
-  <div class="cart-foot">
-    <div class="cart-total-row"><span>الإجمالي</span><span id="cartTotal">0 ج.م</span></div>
-    <a href="checkout.html" class="btn btn-primary btn-block">إتمام الطلب</a>
-  </div>
-</aside>
-
-<script src="js/shared.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="shared.js"></script>
 <script>
-let currentCategory = "الكل";
-let allProducts = [];
+  document.getElementById("year").textContent = new Date().getFullYear();
+  renderHeader("متجري");
 
-function renderProducts() {
-  const grid = document.getElementById("productGrid");
-  const filtered = currentCategory === "الكل" ? allProducts : allProducts.filter(p => p.category === currentCategory);
+  let allProducts = [];
+  let activeCategory = "الكل";
 
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div class="empty-state">مفيش منتجات في القسم ده دلوقتي.</div>`;
-    return;
+  async function loadProducts() {
+    const grid = document.getElementById("product-grid");
+    if (!IS_CONFIGURED) {
+      grid.innerHTML = `<p class="empty">وصّل Firebase الأول عشان تظهر المنتجات هنا (راجع shared.js وREADME.md).</p>`;
+      return;
+    }
+    try {
+      const snap = await db.collection("products").orderBy("createdAt", "desc").get();
+      allProducts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      renderCategories();
+      renderGrid();
+    } catch (e) {
+      grid.innerHTML = `<p class="empty">تعذّر تحميل المنتجات. تأكد من إعدادات Firestore.<br><small>${e.message}</small></p>`;
+    }
   }
 
-  grid.innerHTML = filtered.map(p => `
-    <div class="product-card">
-      <div class="product-media">
-        <a href="product.html?id=${p.id}"><img src="${p.image}" alt="${p.name}"></a>
-        ${p.stock === 0 ? `<span class="badge out">نفدت الكمية</span>` : (p.oldPrice ? `<span class="badge sale">خصم</span>` : "")}
-        <button class="quick-add" ${p.stock === 0 ? "disabled style='opacity:.5'" : ""}
-          onclick='addToCart(${JSON.stringify(p)}); openCart();'>أضف للسلة</button>
-      </div>
-      <div class="product-body">
-        <span class="product-cat">${p.category}</span>
-        <h3 class="product-title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-        <div class="price-row">
-          ${p.oldPrice ? `<span class="price-old">${fmtPrice(p.oldPrice)}</span>` : ""}
-          <span class="price-now">${fmtPrice(p.price)}</span>
+  function renderCategories() {
+    const cats = ["الكل", ...new Set(allProducts.map((p) => p.category).filter(Boolean))];
+    const wrap = document.getElementById("categories");
+    wrap.innerHTML = cats
+      .map(
+        (c) =>
+          `<button class="chip ${c === activeCategory ? "active" : ""}" data-cat="${c}">${c}</button>`
+      )
+      .join("");
+    wrap.querySelectorAll(".chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeCategory = btn.dataset.cat;
+        renderCategories();
+        renderGrid();
+      });
+    });
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById("product-grid");
+    const list =
+      activeCategory === "الكل"
+        ? allProducts
+        : allProducts.filter((p) => p.category === activeCategory);
+
+    if (list.length === 0) {
+      grid.innerHTML = `<p class="empty">لا توجد منتجات حاليًا في هذا القسم.</p>`;
+      return;
+    }
+
+    grid.innerHTML = list
+      .map(
+        (p) => `
+      <a class="card" href="product.html?id=${p.id}">
+        <div class="card-img">
+          ${p.image ? `<img src="${p.image}" alt="${p.name}">` : "🛍️"}
         </div>
-      </div>
-    </div>
-  `).join("");
-}
+        <div class="card-body">
+          <p class="card-name">${p.name}</p>
+          <span class="price">${formatPrice(p.price)}</span>
+          ${p.oldPrice ? `<span class="price old">${formatPrice(p.oldPrice)}</span>` : ""}
+        </div>
+      </a>
+    `
+      )
+      .join("");
+  }
 
-document.getElementById("categoryRow").addEventListener("click", (e) => {
-  if (!e.target.classList.contains("category-pill")) return;
-  document.querySelectorAll(".category-pill").forEach(b => b.classList.remove("active"));
-  e.target.classList.add("active");
-  currentCategory = e.target.dataset.cat;
-  renderProducts();
-});
-
-(async () => {
-  allProducts = await fetchProducts();
-  renderProducts();
-})();
+  loadProducts();
 </script>
 </body>
 </html>

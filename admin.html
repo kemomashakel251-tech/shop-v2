@@ -1,161 +1,273 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>لوحة التحكم — ميزان</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/admin.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>لوحة التحكم — متجري</title>
+<link rel="stylesheet" href="style.css" />
 </head>
-<body class="admin-body">
+<body>
 
-<!-- شاشة تسجيل الدخول -->
-<div class="admin-login" id="adminLoginScreen">
-  <div class="login-card">
-    <div class="brand">أورا</div>
-    <p style="color:var(--text-muted); font-size:14px; margin-top:-14px; margin-bottom:24px;">لوحة تحكم صاحب المتجر</p>
-    <form id="loginForm">
-      <div class="field" style="text-align:right;">
-        <label>البريد الإلكتروني</label>
-        <input type="email" id="loginEmail" required placeholder="admin@mizan.example">
-      </div>
-      <div class="field" style="text-align:right;">
-        <label>كلمة المرور</label>
-        <input type="password" id="loginPassword" required placeholder="••••••••">
-      </div>
-      <button type="submit" class="btn btn-primary btn-block">تسجيل الدخول</button>
-      <p class="login-error" id="loginError"></p>
-    </form>
-    <p style="font-size:12px; color:var(--text-muted); margin-top:18px;">
-      لسه معملتش حساب Firebase Auth؟ أي بيانات هتدخلك لوضع المعاينة.
-    </p>
-  </div>
+<div id="app-root">
+  <p class="empty" style="padding:80px 20px;">جارِ التحميل...</p>
 </div>
 
-<!-- لوحة التحكم -->
-<div class="admin-shell" id="adminShell" style="display:none;">
-  <aside class="admin-sidebar">
-    <div class="brand">أورا</div>
-    <nav class="admin-nav">
-      <button data-panel="dashboard" class="active">نظرة عامة</button>
-      <button data-panel="products">المنتجات</button>
-      <button data-panel="orders">الطلبات</button>
-      <button data-panel="settings">الإعدادات</button>
-      <a href="index.html" target="_blank" style="display:flex; align-items:center; gap:10px; color:#C9D8D4; padding:12px 14px; font-size:14px; font-weight:700;">معاينة المتجر</a>
-    </nav>
-    <div class="admin-sidebar-foot">
-      <button id="logoutBtn">تسجيل الخروج</button>
-    </div>
-  </aside>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="shared.js"></script>
+<script>
+  let auth = null;
+  if (IS_CONFIGURED) auth = firebase.auth();
 
-  <main class="admin-main">
-    <div id="previewBanner" style="display:none; background:#FFF1D6; color:#92610C; padding:12px 18px; border-radius:10px; font-size:13px; font-weight:700; margin-bottom:20px;">
-      ⚠️ وضع المعاينة: Firebase مش مربوط بعد، فالتعديلات هنا مش هتتحفظ فعلياً. اربط بيانات مشروعك في shared.js وadmin-core.js عشان تشتغل اللوحة كاملة.
-    </div>
+  let currentTab = "products";
+  let products = [];
+  let orders = [];
 
-    <!-- نظرة عامة -->
-    <section class="admin-panel active" id="panel-dashboard">
-      <div class="admin-topbar"><h1>نظرة عامة</h1></div>
-      <div id="stockWarning" style="display:none; background:#F4DEDA; color:#C15B3E; padding:12px 18px; border-radius:10px; font-size:13px; font-weight:700; margin-bottom:20px;"></div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="label">إجمالي المنتجات</div><div class="value" id="statProducts">—</div></div>
-        <div class="stat-card"><div class="label">إجمالي الطلبات</div><div class="value" id="statOrders">—</div></div>
-        <div class="stat-card"><div class="label">إجمالي الإيرادات</div><div class="value" id="statRevenue">—</div></div>
-        <div class="stat-card"><div class="label">طلبات جديدة</div><div class="value" id="statPending">—</div></div>
-      </div>
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead><tr><th>رقم الطلب</th><th>العميل</th><th>الإجمالي</th><th>الحالة</th></tr></thead>
-          <tbody id="recentOrdersBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- المنتجات -->
-    <section class="admin-panel" id="panel-products">
-      <div class="admin-topbar"><h1>المنتجات</h1></div>
-      <div class="admin-toolbar">
-        <span style="color:var(--text-muted); font-size:14px;">إدارة كل منتجات الميزان</span>
-        <button class="btn btn-primary" onclick="openProductModal()">+ إضافة منتج</button>
-      </div>
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead><tr><th>صورة</th><th>الاسم</th><th>القسم</th><th>السعر</th><th>المخزون</th><th>إجراءات</th></tr></thead>
-          <tbody id="productsTableBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- الطلبات -->
-    <section class="admin-panel" id="panel-orders">
-      <div class="admin-topbar"><h1>الطلبات</h1></div>
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead><tr><th>رقم الطلب</th><th>العميل</th><th>العنوان</th><th>الإجمالي</th><th>الحالة</th><th></th></tr></thead>
-          <tbody id="ordersTableBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- الإعدادات -->
-    <section class="admin-panel" id="panel-settings">
-      <div class="admin-topbar"><h1>الإعدادات</h1></div>
-      <div class="form-card" style="max-width:520px;">
-        <form id="settingsForm">
+  function renderLogin(errorMsg) {
+    document.getElementById("app-root").innerHTML = `
+      <div class="admin-login">
+        <h2 style="margin-top:0;">تسجيل دخول الأدمن</h2>
+        ${errorMsg ? `<p style="color:#c0392b; font-size:14px;">${errorMsg}</p>` : ""}
+        <form id="login-form">
           <div class="field">
-            <label>اسم المتجر</label>
-            <input type="text" id="setStoreName" required>
+            <label>البريد الإلكتروني</label>
+            <input type="email" name="email" required />
           </div>
           <div class="field">
-            <label>رقم واتساب المتجر (بالكود الدولي، مثال 20 لمصر)</label>
-            <input type="text" id="setWhatsapp" required placeholder="201000000000">
+            <label>كلمة المرور</label>
+            <input type="password" name="password" required />
           </div>
-          <div class="field">
-            <label>نص شعار الصفحة الرئيسية</label>
-            <textarea id="setHeroText"></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">حفظ الإعدادات</button>
+          <button type="submit" class="btn btn-primary">دخول</button>
         </form>
       </div>
-    </section>
-  </main>
-</div>
+    `;
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = e.target;
+      try {
+        await auth.signInWithEmailAndPassword(f.email.value, f.password.value);
+      } catch (err) {
+        renderLogin("بيانات الدخول غير صحيحة، أو لسه معملتش يوزر أدمن (راجع README.md).");
+      }
+    });
+  }
 
-<!-- مودال إضافة/تعديل منتج -->
-<div class="modal-overlay" id="productModal">
-  <div class="modal-box">
-    <h3 id="productModalTitle">إضافة منتج</h3>
-    <form id="productForm">
-      <input type="hidden" id="pfId">
-      <div class="field"><label>اسم المنتج</label><input type="text" id="pfName" required></div>
-      <div class="field">
-        <label>القسم</label>
-        <select id="pfCategory">
-          <option>بقالة</option><option>منزل</option><option>أزياء</option><option>عناية</option>
-        </select>
+  function renderShell() {
+    document.getElementById("app-root").innerHTML = `
+      <div class="admin-shell">
+        <aside class="admin-sidebar">
+          <span class="logo">لوحة التحكم</span>
+          <a href="#" data-tab="products" class="tab-link">المنتجات</a>
+          <a href="#" data-tab="orders" class="tab-link">الطلبات</a>
+          <a href="#" id="logout-link">تسجيل الخروج</a>
+        </aside>
+        <main class="admin-main" id="admin-main"></main>
       </div>
-      <div style="display:flex; gap:12px;">
-        <div class="field" style="flex:1;"><label>السعر الحالي</label><input type="number" id="pfPrice" required></div>
-        <div class="field" style="flex:1;"><label>السعر قبل الخصم (اختياري)</label><input type="number" id="pfOldPrice"></div>
-      </div>
-      <div class="field"><label>الكمية بالمخزون</label><input type="number" id="pfStock" required></div>
-      <div class="field"><label>رابط الصورة</label><input type="url" id="pfImage" required placeholder="https://..."></div>
-      <div class="field"><label>الوصف</label><textarea id="pfDesc"></textarea></div>
-      <div style="display:flex; gap:10px;">
-        <button type="submit" class="btn btn-primary" style="flex:1;">حفظ</button>
-        <button type="button" class="btn btn-dark" onclick="closeProductModal()" style="flex:1;">إلغاء</button>
-      </div>
-    </form>
-  </div>
-</div>
+    `;
+    document.querySelectorAll(".tab-link").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        currentTab = a.dataset.tab;
+        renderTabs();
+        renderCurrentTab();
+      });
+    });
+    document.getElementById("logout-link").addEventListener("click", (e) => {
+      e.preventDefault();
+      auth.signOut();
+    });
+    renderTabs();
+    renderCurrentTab();
+  }
 
-<script src="js/shared.js"></script>
-<script src="js/admin-core.js"></script>
-<script src="js/admin-products.js"></script>
-<script src="js/admin-orders.js"></script>
-<script src="js/admin-dashboard.js"></script>
-<script src="js/admin-settings.js"></script>
-<script src="js/admin-init.js"></script>
+  function renderTabs() {
+    document.querySelectorAll(".tab-link").forEach((a) => {
+      a.classList.toggle("active", a.dataset.tab === currentTab);
+    });
+  }
+
+  function renderCurrentTab() {
+    if (currentTab === "products") loadProducts();
+    else loadOrders();
+  }
+
+  /* ---------------- Products ---------------- */
+  async function loadProducts() {
+    const main = document.getElementById("admin-main");
+    main.innerHTML = `<p class="empty">جارِ التحميل...</p>`;
+    const snap = await db.collection("products").orderBy("createdAt", "desc").get();
+    products = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderProductsTable();
+  }
+
+  function renderProductsTable() {
+    const main = document.getElementById("admin-main");
+    main.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <h2 style="margin:0;">المنتجات (${products.length})</h2>
+        <button class="btn btn-primary" style="width:auto; padding:10px 18px;" id="add-product-btn">+ إضافة منتج</button>
+      </div>
+      ${
+        products.length === 0
+          ? `<p class="empty">لا توجد منتجات بعد.</p>`
+          : `<table class="table">
+              <thead><tr><th>الاسم</th><th>القسم</th><th>السعر</th><th></th></tr></thead>
+              <tbody>
+                ${products
+                  .map(
+                    (p) => `
+                  <tr>
+                    <td>${p.name}</td>
+                    <td>${p.category || "-"}</td>
+                    <td>${formatPrice(p.price)}</td>
+                    <td>
+                      <button class="icon-btn" onclick="editProduct('${p.id}')">تعديل</button>
+                      <button class="icon-btn" style="color:#c0392b;" onclick="deleteProduct('${p.id}')">حذف</button>
+                    </td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>`
+      }
+    `;
+    document.getElementById("add-product-btn").onclick = () => openProductModal(null);
+  }
+
+  function openProductModal(product) {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <h2 style="margin-top:0;">${product ? "تعديل المنتج" : "إضافة منتج جديد"}</h2>
+        <form id="product-form">
+          <div class="field"><label>اسم المنتج</label><input name="name" required value="${product?.name || ""}" /></div>
+          <div class="field"><label>القسم</label><input name="category" value="${product?.category || ""}" /></div>
+          <div class="field"><label>السعر</label><input name="price" type="number" step="0.01" required value="${product?.price ?? ""}" /></div>
+          <div class="field"><label>السعر قبل الخصم (اختياري)</label><input name="oldPrice" type="number" step="0.01" value="${product?.oldPrice ?? ""}" /></div>
+          <div class="field"><label>رابط الصورة</label><input name="image" value="${product?.image || ""}" placeholder="https://..." /></div>
+          <div class="field"><label>الوصف</label><textarea name="description">${product?.description || ""}</textarea></div>
+          <div style="display:flex; gap:10px;">
+            <button type="button" class="btn btn-outline" id="cancel-modal">إلغاء</button>
+            <button type="submit" class="btn btn-primary">حفظ</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector("#cancel-modal").onclick = () => overlay.remove();
+    overlay.querySelector("#product-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = e.target;
+      const data = {
+        name: f.name.value.trim(),
+        category: f.category.value.trim(),
+        price: parseFloat(f.price.value) || 0,
+        oldPrice: f.oldPrice.value ? parseFloat(f.oldPrice.value) : null,
+        image: f.image.value.trim(),
+        description: f.description.value.trim()
+      };
+      if (product) {
+        await db.collection("products").doc(product.id).update(data);
+      } else {
+        data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        await db.collection("products").add(data);
+      }
+      overlay.remove();
+      loadProducts();
+    });
+  }
+
+  window.editProduct = (id) => openProductModal(products.find((p) => p.id === id));
+  window.deleteProduct = async (id) => {
+    if (!confirm("متأكد إنك عايز تحذف المنتج ده؟")) return;
+    await db.collection("products").doc(id).delete();
+    loadProducts();
+  };
+
+  /* ---------------- Orders ---------------- */
+  const STATUSES = ["جديد", "قيد التجهيز", "تم الشحن", "تم التسليم", "ملغي"];
+
+  async function loadOrders() {
+    const main = document.getElementById("admin-main");
+    main.innerHTML = `<p class="empty">جارِ التحميل...</p>`;
+    const snap = await db.collection("orders").orderBy("createdAt", "desc").get();
+    orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderOrdersTable();
+  }
+
+  function renderOrdersTable() {
+    const main = document.getElementById("admin-main");
+    main.innerHTML = `
+      <h2 style="margin-top:0;">الطلبات (${orders.length})</h2>
+      ${
+        orders.length === 0
+          ? `<p class="empty">لا توجد طلبات بعد.</p>`
+          : `<table class="table">
+              <thead><tr><th>العميل</th><th>الموبايل</th><th>الإجمالي</th><th>الحالة</th><th></th></tr></thead>
+              <tbody>
+                ${orders
+                  .map(
+                    (o) => `
+                  <tr>
+                    <td>${o.customerName}</td>
+                    <td>${o.phone}</td>
+                    <td>${formatPrice(o.total)}</td>
+                    <td>
+                      <select onchange="updateStatus('${o.id}', this.value)">
+                        ${STATUSES.map((s) => `<option value="${s}" ${s === o.status ? "selected" : ""}>${s}</option>`).join("")}
+                      </select>
+                    </td>
+                    <td><button class="icon-btn" onclick="viewOrder('${o.id}')">تفاصيل</button></td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>`
+      }
+    `;
+  }
+
+  window.updateStatus = async (id, status) => {
+    await db.collection("orders").doc(id).update({ status });
+    const o = orders.find((x) => x.id === id);
+    if (o) o.status = status;
+  };
+
+  window.viewOrder = (id) => {
+    const o = orders.find((x) => x.id === id);
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <h2 style="margin-top:0;">تفاصيل الطلب</h2>
+        <p><strong>العميل:</strong> ${o.customerName}</p>
+        <p><strong>الموبايل:</strong> ${o.phone}</p>
+        <p><strong>المحافظة:</strong> ${o.city}</p>
+        <p><strong>العنوان:</strong> ${o.address}</p>
+        ${o.notes ? `<p><strong>ملاحظات:</strong> ${o.notes}</p>` : ""}
+        <hr style="border-color: var(--border); margin: 16px 0;" />
+        ${o.items.map((i) => `<div class="cart-line"><div class="cart-line-info"><p class="cart-line-name">${i.name}</p><p class="cart-line-qty">${formatPrice(i.price)} × ${i.qty}</p></div></div>`).join("")}
+        <div class="total-row"><span>الإجمالي</span><span>${formatPrice(o.total)}</span></div>
+        <button class="btn btn-outline" id="close-modal">إغلاق</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector("#close-modal").onclick = () => overlay.remove();
+  };
+
+  /* ---------------- Boot ---------------- */
+  if (!IS_CONFIGURED) {
+    document.getElementById("app-root").innerHTML = `<p class="empty" style="padding:80px 20px;">وصّل Firebase الأول عشان تقدر تدخل لوحة التحكم (راجع shared.js وREADME.md).</p>`;
+  } else {
+    auth.onAuthStateChanged((user) => {
+      if (user) renderShell();
+      else renderLogin();
+    });
+  }
+</script>
 </body>
 </html>

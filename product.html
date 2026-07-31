@@ -1,104 +1,106 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تفاصيل المنتج — أورا</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>تفاصيل المنتج — متجري</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div class="announce-bar">شحن مجاني للطلبات فوق 500 ج.م — دفع عند الاستلام متاح</div>
+<header id="site-header"></header>
 
-<header class="site-header">
-  <div class="container">
-    <a href="index.html" class="brand">أورا</a>
-    <nav class="main-nav">
-      <a href="index.html">الرئيسية</a>
-      <a href="index.html#shop">كل المنتجات</a>
-    </nav>
-    <div class="header-actions">
-      <button class="icon-btn" onclick="openCart()" title="السلة">
-        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
-        <span class="cart-count">0</span>
-      </button>
-    </div>
-  </div>
-</header>
+<main id="product-root">
+  <p class="empty">جارِ تحميل بيانات المنتج...</p>
+</main>
 
-<div class="container">
-  <div class="breadcrumb"><a href="index.html">الرئيسية</a> / <span id="bcName">المنتج</span></div>
-  <div class="product-detail" id="pdContent">
-    <div class="empty-state">جاري تحميل المنتج...</div>
-  </div>
-</div>
+<footer>© <span id="year"></span> متجري — جميع الحقوق محفوظة</footer>
 
-<footer class="site-footer">
-  <div class="container"><div class="footer-bottom">© 2026 أورا. جميع الحقوق محفوظة.</div></div>
-</footer>
-
-<div class="overlay" id="cartOverlay" onclick="closeCart()"></div>
-<aside class="cart-drawer" id="cartDrawer">
-  <div class="cart-head">
-    <h3>سلة المشتريات</h3>
-    <button class="cart-close" onclick="closeCart()">✕</button>
-  </div>
-  <div class="cart-items" id="cartItems"></div>
-  <div class="cart-foot">
-    <div class="cart-total-row"><span>الإجمالي</span><span id="cartTotal">0 ج.م</span></div>
-    <a href="checkout.html" class="btn btn-primary btn-block">إتمام الطلب</a>
-  </div>
-</aside>
-
-<script src="js/shared.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="shared.js"></script>
 <script>
-async function loadProduct() {
-  const id = new URLSearchParams(location.search).get("id");
-  const p = await fetchProduct(id);
-  const wrap = document.getElementById("pdContent");
+  document.getElementById("year").textContent = new Date().getFullYear();
+  renderHeader("متجري");
 
-  if (!p) {
-    wrap.innerHTML = `<div class="empty-state">المنتج ده مش موجود. <a href="index.html" style="color:var(--ink); font-weight:700;">ارجع للمتجر</a></div>`;
-    return;
+  const params = new URLSearchParams(location.search);
+  const productId = params.get("id");
+  let currentProduct = null;
+
+  async function loadProduct() {
+    const root = document.getElementById("product-root");
+    if (!IS_CONFIGURED) {
+      root.innerHTML = `<p class="empty">وصّل Firebase الأول عشان تظهر بيانات المنتج.</p>`;
+      return;
+    }
+    if (!productId) {
+      root.innerHTML = `<p class="empty">المنتج غير موجود.</p>`;
+      return;
+    }
+    try {
+      const doc = await db.collection("products").doc(productId).get();
+      if (!doc.exists) {
+        root.innerHTML = `<p class="empty">المنتج ده مش موجود أو اتشال.</p>`;
+        return;
+      }
+      currentProduct = { id: doc.id, ...doc.data() };
+      renderProduct();
+    } catch (e) {
+      root.innerHTML = `<p class="empty">حصل خطأ أثناء التحميل.<br><small>${e.message}</small></p>`;
+    }
   }
 
-  document.title = p.name + " — أورا";
-  document.getElementById("bcName").textContent = p.name;
-  wrap.innerHTML = `
-    <div class="pd-gallery"><img src="${p.image}" alt="${p.name}"></div>
-    <div>
-      <span class="pd-cat">${p.category}</span>
-      <h1 class="pd-title">${p.name}</h1>
-      <div class="pd-price">
-        ${p.oldPrice ? `<span class="price-old" style="font-size:17px; margin-left:8px;">${fmtPrice(p.oldPrice)}</span>` : ""}
-        ${fmtPrice(p.price)}
-      </div>
-      <span class="stock-badge ${p.stock > 0 ? 'in' : 'out'}">${p.stock > 0 ? `متوفر (${p.stock} قطعة)` : "غير متوفر حالياً"}</span>
-      <p class="pd-desc" style="margin-top:18px;">${p.desc || ""}</p>
-      <div class="pd-qty-row">
-        <div class="qty-control" style="border:1.5px solid var(--line); border-radius:4px; padding:4px 10px;">
-          <button onclick="changeQty(-1)">−</button>
-          <span id="pdQty">1</span>
-          <button onclick="changeQty(1)">+</button>
+  function renderProduct() {
+    const p = currentProduct;
+    document.title = p.name + " — متجري";
+    document.getElementById("product-root").innerHTML = `
+      <div class="product-view">
+        <div class="product-img">
+          ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:60px;">🛍️</div>`}
+        </div>
+        <div class="product-info">
+          ${p.category ? `<span class="chip active" style="display:inline-block;margin-bottom:10px;">${p.category}</span>` : ""}
+          <h1>${p.name}</h1>
+          <span class="price">${formatPrice(p.price)} ${p.oldPrice ? `<span class="price old">${formatPrice(p.oldPrice)}</span>` : ""}</span>
+          <p class="product-desc">${p.description || "لا يوجد وصف لهذا المنتج."}</p>
+
+          <div class="qty-row">
+            <span style="font-weight:700;">الكمية</span>
+            <div class="qty-box">
+              <button id="qty-minus" type="button">−</button>
+              <input id="qty-input" type="number" value="1" min="1" />
+              <button id="qty-plus" type="button">+</button>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:12px;">
+            <button class="btn btn-outline" id="add-cart-btn">أضف للسلة</button>
+            <button class="btn btn-primary" id="order-now-btn">اطلب الآن</button>
+          </div>
         </div>
       </div>
-      <button class="btn btn-primary btn-block" ${p.stock === 0 ? "disabled style='opacity:.5'" : ""}
-        onclick='addToCart(${JSON.stringify(p)}, window.__pdQty || 1); openCart();'>
-        أضف للسلة
-      </button>
-    </div>
-  `;
-}
+    `;
 
-window.__pdQty = 1;
-function changeQty(delta) {
-  window.__pdQty = Math.max(1, (window.__pdQty || 1) + delta);
-  document.getElementById("pdQty").textContent = window.__pdQty;
-}
+    document.getElementById("qty-minus").onclick = () => stepQty(-1);
+    document.getElementById("qty-plus").onclick = () => stepQty(1);
+    document.getElementById("add-cart-btn").onclick = () => {
+      addToCart(p, getQty());
+    };
+    document.getElementById("order-now-btn").onclick = () => {
+      addToCart(p, getQty());
+      location.href = "checkout.html";
+    };
+  }
 
-loadProduct();
+  function getQty() {
+    return Math.max(1, parseInt(document.getElementById("qty-input").value) || 1);
+  }
+  function stepQty(delta) {
+    const input = document.getElementById("qty-input");
+    input.value = Math.max(1, (parseInt(input.value) || 1) + delta);
+  }
+
+  loadProduct();
 </script>
 </body>
 </html>
