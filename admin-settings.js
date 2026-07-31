@@ -1,10 +1,10 @@
 // =========================================================
-// دكّان — admin-settings.js
+// ميزان — admin-settings.js
 // إعدادات عامة للمتجر (اسم، واتساب، رسالة الهيدر) — تُخزَّن في
 // مستند واحد settings/store بدل كولكشن كامل، لأنها بيانات ثابتة.
 // =========================================================
 async function loadAdminSettings() {
-  let settings = { storeName: "دكّان", whatsapp: "201000000000", heroText: "منتجات محلية أصيلة توصلك لبيتك" };
+  let settings = { storeName: "ميزان", whatsapp: "201000000000", heroText: "منتجات مختارة بعناية توصلك لبيتك" };
 
   if (adminFirebaseReady && adminDb) {
     try {

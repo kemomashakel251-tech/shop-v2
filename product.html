@@ -3,33 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تفاصيل المنتج — دكّان</title>
+<title>تفاصيل المنتج — أورا</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
+<div class="announce-bar">شحن مجاني للطلبات فوق 500 ج.م — دفع عند الاستلام متاح</div>
+
 <header class="site-header">
   <div class="container">
-    <a href="index.html" class="brand">دكّان <span>SOUQ EL-HARA</span></a>
+    <a href="index.html" class="brand">أورا</a>
+    <nav class="main-nav">
+      <a href="index.html">الرئيسية</a>
+      <a href="index.html#shop">كل المنتجات</a>
+    </nav>
     <div class="header-actions">
-      <a href="admin.html" class="icon-btn" title="لوحة التحكم" style="font-size:14px;">الإدارة</a>
-      <button class="icon-btn" onclick="openCart()" title="السلة">🛒<span class="cart-count">0</span></button>
+      <button class="icon-btn" onclick="openCart()" title="السلة">
+        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
+        <span class="cart-count">0</span>
+      </button>
     </div>
   </div>
 </header>
 
-<div class="container" id="pdWrap">
+<div class="container">
+  <div class="breadcrumb"><a href="index.html">الرئيسية</a> / <span id="bcName">المنتج</span></div>
   <div class="product-detail" id="pdContent">
     <div class="empty-state">جاري تحميل المنتج...</div>
   </div>
 </div>
 
 <footer class="site-footer">
-  <div class="container">
-    <div class="footer-bottom">© 2026 دكّان. جميع الحقوق محفوظة.</div>
-  </div>
+  <div class="container"><div class="footer-bottom">© 2026 أورا. جميع الحقوق محفوظة.</div></div>
 </footer>
 
 <div class="overlay" id="cartOverlay" onclick="closeCart()"></div>
@@ -57,26 +64,27 @@ async function loadProduct() {
     return;
   }
 
-  document.title = p.name + " — دكّان";
+  document.title = p.name + " — أورا";
+  document.getElementById("bcName").textContent = p.name;
   wrap.innerHTML = `
     <div class="pd-gallery"><img src="${p.image}" alt="${p.name}"></div>
     <div>
       <span class="pd-cat">${p.category}</span>
       <h1 class="pd-title">${p.name}</h1>
       <div class="pd-price">
-        ${p.oldPrice ? `<span class="price-old" style="font-size:18px;">${fmtPrice(p.oldPrice)}</span> ` : ""}
+        ${p.oldPrice ? `<span class="price-old" style="font-size:17px; margin-left:8px;">${fmtPrice(p.oldPrice)}</span>` : ""}
         ${fmtPrice(p.price)}
       </div>
       <span class="stock-badge ${p.stock > 0 ? 'in' : 'out'}">${p.stock > 0 ? `متوفر (${p.stock} قطعة)` : "غير متوفر حالياً"}</span>
       <p class="pd-desc" style="margin-top:18px;">${p.desc || ""}</p>
       <div class="pd-qty-row">
-        <div class="qty-control" style="border:1.5px solid var(--line); border-radius:10px; padding:4px 10px;">
+        <div class="qty-control" style="border:1.5px solid var(--line); border-radius:4px; padding:4px 10px;">
           <button onclick="changeQty(-1)">−</button>
           <span id="pdQty">1</span>
           <button onclick="changeQty(1)">+</button>
         </div>
       </div>
-      <button class="btn btn-primary btn-block" ${p.stock === 0 ? "disabled style='opacity:.4'" : ""}
+      <button class="btn btn-primary btn-block" ${p.stock === 0 ? "disabled style='opacity:.5'" : ""}
         onclick='addToCart(${JSON.stringify(p)}, window.__pdQty || 1); openCart();'>
         أضف للسلة
       </button>

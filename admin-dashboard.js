@@ -1,5 +1,5 @@
 // =========================================================
-// دكّان — admin-dashboard.js
+// ميزان — admin-dashboard.js
 // =========================================================
 async function loadAdminDashboard() {
   const products = adminProductsCache.length ? adminProductsCache : await fetchProducts();

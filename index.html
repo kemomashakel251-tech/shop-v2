@@ -3,21 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>دكّان — سوق الحارة الإلكتروني</title>
-<meta name="description" content="دكّان: منتجات محلية أصيلة توصلك لبيتك">
+<title>أورا — تسوق أونلاين</title>
+<meta name="description" content="أورا: منتجات مختارة بعناية، جودة موثوقة، وتوصيل سريع">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
+<div class="announce-bar">شحن مجاني للطلبات فوق 500 ج.م — دفع عند الاستلام متاح</div>
+
 <header class="site-header">
   <div class="container">
-    <a href="index.html" class="brand">دكّان <span>SOUQ EL-HARA</span></a>
+    <a href="index.html" class="brand">أورا</a>
+    <nav class="main-nav">
+      <a href="index.html">الرئيسية</a>
+      <a href="index.html#shop">كل المنتجات</a>
+      <a href="index.html#categories">الأقسام</a>
+    </nav>
     <div class="header-actions">
-      <a href="admin.html" class="icon-btn" title="لوحة التحكم" style="font-size:14px;">الإدارة</a>
       <button class="icon-btn" onclick="openCart()" title="السلة">
-        🛒<span class="cart-count">0</span>
+        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/></svg>
+        <span class="cart-count">0</span>
       </button>
     </div>
   </div>
@@ -26,21 +33,40 @@
 <section class="hero">
   <div class="container hero-inner">
     <div>
-      <span class="hero-eyebrow">طازة من الدكّان لحد باب البيت</span>
-      <h1>كل يوم في دكّانك<br>حاجة جديدة تستاهل</h1>
-      <p>منتجات محلية أصيلة، من البقالة للأزياء للعناية، مختارة بعناية وتوصلك في نفس اليوم.</p>
+      <span class="hero-eyebrow">تشكيلة الموسم</span>
+      <h1>تسوّق قطع مختارة<br>بعناية وجودة تدوم</h1>
+      <p>منتجات أصلية 100%، فحص جودة قبل الشحن، وتوصيل لباب بيتك في نفس الأسبوع.</p>
       <div style="display:flex; gap:14px; flex-wrap:wrap;">
-        <a href="#shop" class="btn btn-primary">تسوّق دلوقتي</a>
-        <a href="#categories" class="btn btn-outline">استكشف الأقسام</a>
+        <a href="#shop" class="btn btn-primary">تسوّق المجموعة</a>
+        <a href="#categories" class="btn btn-outline">استعرض الأقسام</a>
       </div>
     </div>
-    <div class="hero-mosaic">
-      <div><img src="https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=500" alt=""></div>
-      <div><img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=500" alt=""></div>
-      <div><img src="https://images.unsplash.com/photo-1506617420156-8e4536971650?w=500" alt=""></div>
+    <div class="hero-media">
+      <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800" alt="">
     </div>
   </div>
 </section>
+
+<div class="trust-bar">
+  <div class="container">
+    <div class="trust-item">
+      <svg viewBox="0 0 24 24"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      <div><div class="t-title">شحن سريع</div><div class="t-sub">خلال 2-4 أيام عمل</div></div>
+    </div>
+    <div class="trust-item">
+      <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      <div><div class="t-title">دفع عند الاستلام</div><div class="t-sub">ادفع لما تستلم</div></div>
+    </div>
+    <div class="trust-item">
+      <svg viewBox="0 0 24 24"><path d="M3 12l6 6L21 6"/></svg>
+      <div><div class="t-title">جودة مضمونة</div><div class="t-sub">فحص قبل الشحن</div></div>
+    </div>
+    <div class="trust-item">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+      <div><div class="t-title">استرجاع سهل</div><div class="t-sub">خلال 14 يوم</div></div>
+    </div>
+  </div>
+</div>
 
 <section class="section" id="categories">
   <div class="container">
@@ -54,12 +80,12 @@
   </div>
 </section>
 
-<section class="section" id="shop">
+<section class="section alt" id="shop">
   <div class="container">
     <div class="section-head">
       <div>
-        <span class="eyebrow">مختارات الدكّان</span>
-        <h2>منتجاتنا</h2>
+        <span class="eyebrow">مختاراتنا</span>
+        <h2>الأكثر طلباً</h2>
       </div>
     </div>
     <div class="product-grid" id="productGrid">
@@ -72,26 +98,33 @@
   <div class="container">
     <div class="footer-grid">
       <div>
-        <h4 class="brand" style="font-size:22px;">دكّان</h4>
-        <p style="max-width:32ch; font-size:14px;">سوق الحارة الإلكتروني — منتجات محلية، توصيل سريع، وثقة من أول طلب.</p>
+        <div class="brand">أورا</div>
+        <p>منتجات مختارة بعناية، جودة موثوقة، وخدمة عملاء بترد بسرعة.</p>
       </div>
       <div>
-        <h4>روابط</h4>
+        <h4>تسوق</h4>
         <ul>
           <li><a href="index.html">الرئيسية</a></li>
           <li><a href="checkout.html">السلة والدفع</a></li>
-          <li><a href="admin.html">لوحة التحكم</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>سياسات</h4>
+        <ul>
+          <li><a href="#">سياسة الخصوصية</a></li>
+          <li><a href="#">سياسة الاسترجاع</a></li>
+          <li><a href="#">الشحن والتوصيل</a></li>
         </ul>
       </div>
       <div>
         <h4>تواصل معنا</h4>
         <ul>
           <li>واتساب: 01000000000</li>
-          <li>البريد: info@dokkan.example</li>
+          <li>info@aura.example</li>
         </ul>
       </div>
     </div>
-    <div class="footer-bottom">© 2026 دكّان. جميع الحقوق محفوظة.</div>
+    <div class="footer-bottom">© 2026 أورا. جميع الحقوق محفوظة.</div>
   </div>
 </footer>
 
@@ -124,24 +157,18 @@ function renderProducts() {
 
   grid.innerHTML = filtered.map(p => `
     <div class="product-card">
-      <a href="product.html?id=${p.id}">
-        <div class="product-media">
-          <img src="${p.image}" alt="${p.name}">
-          <div class="price-stamp ${p.oldPrice ? 'sale' : ''}">
-            <small>ج.م</small><span>${p.price}</span>
-          </div>
-        </div>
-      </a>
+      <div class="product-media">
+        <a href="product.html?id=${p.id}"><img src="${p.image}" alt="${p.name}"></a>
+        ${p.stock === 0 ? `<span class="badge out">نفدت الكمية</span>` : (p.oldPrice ? `<span class="badge sale">خصم</span>` : "")}
+        <button class="quick-add" ${p.stock === 0 ? "disabled style='opacity:.5'" : ""}
+          onclick='addToCart(${JSON.stringify(p)}); openCart();'>أضف للسلة</button>
+      </div>
       <div class="product-body">
         <span class="product-cat">${p.category}</span>
         <h3 class="product-title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-        <div class="product-foot">
-          <div>
-            ${p.oldPrice ? `<span class="price-old">${fmtPrice(p.oldPrice)}</span><br>` : ""}
-            <span class="price-now">${fmtPrice(p.price)}</span>
-          </div>
-          <button class="add-btn" ${p.stock === 0 ? "disabled style='opacity:.4'" : ""}
-            onclick='addToCart(${JSON.stringify(p)}); openCart();'>+</button>
+        <div class="price-row">
+          ${p.oldPrice ? `<span class="price-old">${fmtPrice(p.oldPrice)}</span>` : ""}
+          <span class="price-now">${fmtPrice(p.price)}</span>
         </div>
       </div>
     </div>

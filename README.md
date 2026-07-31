@@ -1,4 +1,4 @@
-# دكّان — متجر إلكتروني بسيط (Firebase Spark - مجاني بالكامل)
+# ميزان — متجر إلكتروني بسيط (Firebase Spark - مجاني بالكامل)
 
 موقع تجارة إلكترونية جاهز، بدون سيرفر خلفي (backend) — بيشتغل بالكامل على
 **HTML/CSS/JS + Firestore + Firebase Hosting**، ومناسب 100% لخطة Firebase
