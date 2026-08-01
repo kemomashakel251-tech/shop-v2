@@ -23,17 +23,21 @@
   </div>
 </main>
 
-<footer>© <span id="year"></span> متجري — جميع الحقوق محفوظة</footer>
+<footer id="site-footer"></footer>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="shared.js"></script>
 <script>
-  document.getElementById("year").textContent = new Date().getFullYear();
-  renderHeader("متجري");
-
   let allProducts = [];
   let activeCategory = "الكل";
+
+  init();
+
+  async function init() {
+    await bootPage();
+    loadProducts();
+  }
 
   async function loadProducts() {
     const grid = document.getElementById("product-grid");
@@ -42,8 +46,7 @@
       return;
     }
     try {
-      const snap = await db.collection("products").orderBy("createdAt", "desc").get();
-      allProducts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      allProducts = await getProductsCached();
       renderCategories();
       renderGrid();
     } catch (e) {
@@ -55,10 +58,7 @@
     const cats = ["الكل", ...new Set(allProducts.map((p) => p.category).filter(Boolean))];
     const wrap = document.getElementById("categories");
     wrap.innerHTML = cats
-      .map(
-        (c) =>
-          `<button class="chip ${c === activeCategory ? "active" : ""}" data-cat="${c}">${c}</button>`
-      )
+      .map((c) => `<button class="chip ${c === activeCategory ? "active" : ""}" data-cat="${c}">${c}</button>`)
       .join("");
     wrap.querySelectorAll(".chip").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -71,10 +71,7 @@
 
   function renderGrid() {
     const grid = document.getElementById("product-grid");
-    const list =
-      activeCategory === "الكل"
-        ? allProducts
-        : allProducts.filter((p) => p.category === activeCategory);
+    const list = activeCategory === "الكل" ? allProducts : allProducts.filter((p) => p.category === activeCategory);
 
     if (list.length === 0) {
       grid.innerHTML = `<p class="empty">لا توجد منتجات حاليًا في هذا القسم.</p>`;
@@ -86,7 +83,7 @@
         (p) => `
       <a class="card" href="product.html?id=${p.id}">
         <div class="card-img">
-          ${p.image ? `<img src="${p.image}" alt="${p.name}">` : "🛍️"}
+          ${(p.images && p.images[0]) || p.image ? `<img src="${(p.images && p.images[0]) || p.image}" alt="${p.name}">` : "🛍️"}
         </div>
         <div class="card-body">
           <p class="card-name">${p.name}</p>
@@ -98,8 +95,6 @@
       )
       .join("");
   }
-
-  loadProducts();
 </script>
 </body>
 </html>

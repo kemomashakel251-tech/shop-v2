@@ -14,18 +14,25 @@
   <p class="empty">جارِ تحميل بيانات المنتج...</p>
 </main>
 
-<footer>© <span id="year"></span> متجري — جميع الحقوق محفوظة</footer>
+<footer id="site-footer"></footer>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="shared.js"></script>
 <script>
-  document.getElementById("year").textContent = new Date().getFullYear();
-  renderHeader("متجري");
-
   const params = new URLSearchParams(location.search);
   const productId = params.get("id");
   let currentProduct = null;
+  let selectedColor = "";
+  let selectedSize = "";
+  let activeMediaIndex = 0;
+
+  init();
+
+  async function init() {
+    await bootPage();
+    loadProduct();
+  }
 
   async function loadProduct() {
     const root = document.getElementById("product-root");
@@ -44,25 +51,89 @@
         return;
       }
       currentProduct = { id: doc.id, ...doc.data() };
+      if (!currentProduct.images) currentProduct.images = currentProduct.image ? [currentProduct.image] : [];
+      selectedColor = (currentProduct.colors && currentProduct.colors[0]) || "";
+      selectedSize = (currentProduct.sizes && currentProduct.sizes[0]) || "";
       renderProduct();
+      const settings = await getSettings();
+      applySEO(settings, currentProduct.name + " — " + (settings.storeName || "متجري"), currentProduct.description);
+      trackPixelEvent("ViewContent", { value: currentProduct.price, currency: "EGP" });
     } catch (e) {
       root.innerHTML = `<p class="empty">حصل خطأ أثناء التحميل.<br><small>${e.message}</small></p>`;
     }
   }
 
+  function mediaList() {
+    const p = currentProduct;
+    const list = (p.images || []).map((url) => ({ type: "image", url }));
+    if (p.video) list.push({ type: "video", url: p.video });
+    return list;
+  }
+
   function renderProduct() {
     const p = currentProduct;
-    document.title = p.name + " — متجري";
+    const media = mediaList();
+    const activeMedia = media[activeMediaIndex] || { type: "image", url: "" };
+
     document.getElementById("product-root").innerHTML = `
       <div class="product-view">
-        <div class="product-img">
-          ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:60px;">🛍️</div>`}
+        <div>
+          <div class="product-img">
+            ${
+              media.length === 0
+                ? `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:60px;">🛍️</div>`
+                : activeMedia.type === "video"
+                ? `<video src="${activeMedia.url}" controls playsinline style="width:100%;height:100%;object-fit:cover;"></video>`
+                : `<img src="${activeMedia.url}" alt="${p.name}">`
+            }
+          </div>
+          ${
+            media.length > 1
+              ? `<div class="thumb-row">
+                  ${media
+                    .map(
+                      (m, idx) => `
+                    <button type="button" class="thumb-btn ${idx === activeMediaIndex ? "active" : ""}" onclick="setActiveMedia(${idx})">
+                      ${m.type === "video" ? `<span class="thumb-play">▶</span><video src="${m.url}" muted></video>` : `<img src="${m.url}">`}
+                    </button>
+                  `
+                    )
+                    .join("")}
+                </div>`
+              : ""
+          }
         </div>
         <div class="product-info">
           ${p.category ? `<span class="chip active" style="display:inline-block;margin-bottom:10px;">${p.category}</span>` : ""}
           <h1>${p.name}</h1>
           <span class="price">${formatPrice(p.price)} ${p.oldPrice ? `<span class="price old">${formatPrice(p.oldPrice)}</span>` : ""}</span>
+          ${
+            p.qtyDiscountThreshold
+              ? `<p style="color:var(--brand-dark); font-weight:700; font-size:14px; margin:8px 0;">🎁 اشترِ ${p.qtyDiscountThreshold} قطع أو أكتر واحصل على خصم ${p.qtyDiscountPercent}%</p>`
+              : ""
+          }
           <p class="product-desc">${p.description || "لا يوجد وصف لهذا المنتج."}</p>
+
+          ${
+            p.colors && p.colors.length
+              ? `<div class="field">
+                  <label>اللون</label>
+                  <div class="variant-row" id="color-row">
+                    ${p.colors.map((c) => `<button type="button" class="variant-btn ${c === selectedColor ? "active" : ""}" data-color="${c}">${c}</button>`).join("")}
+                  </div>
+                </div>`
+              : ""
+          }
+          ${
+            p.sizes && p.sizes.length
+              ? `<div class="field">
+                  <label>المقاس</label>
+                  <div class="variant-row" id="size-row">
+                    ${p.sizes.map((s) => `<button type="button" class="variant-btn ${s === selectedSize ? "active" : ""}" data-size="${s}">${s}</button>`).join("")}
+                  </div>
+                </div>`
+              : ""
+          }
 
           <div class="qty-row">
             <span style="font-weight:700;">الكمية</span>
@@ -84,23 +155,34 @@
     document.getElementById("qty-minus").onclick = () => stepQty(-1);
     document.getElementById("qty-plus").onclick = () => stepQty(1);
     document.getElementById("add-cart-btn").onclick = () => {
-      addToCart(p, getQty());
+      addToCart(p, getQty(), { color: selectedColor, size: selectedSize });
     };
     document.getElementById("order-now-btn").onclick = () => {
-      addToCart(p, getQty());
+      addToCart(p, getQty(), { color: selectedColor, size: selectedSize });
       location.href = "checkout.html";
     };
+
+    const colorRow = document.getElementById("color-row");
+    if (colorRow) {
+      colorRow.querySelectorAll(".variant-btn").forEach((btn) => {
+        btn.addEventListener("click", () => { selectedColor = btn.dataset.color; renderProduct(); });
+      });
+    }
+    const sizeRow = document.getElementById("size-row");
+    if (sizeRow) {
+      sizeRow.querySelectorAll(".variant-btn").forEach((btn) => {
+        btn.addEventListener("click", () => { selectedSize = btn.dataset.size; renderProduct(); });
+      });
+    }
   }
 
-  function getQty() {
-    return Math.max(1, parseInt(document.getElementById("qty-input").value) || 1);
-  }
+  window.setActiveMedia = (idx) => { activeMediaIndex = idx; renderProduct(); };
+
+  function getQty() { return Math.max(1, parseInt(document.getElementById("qty-input").value) || 1); }
   function stepQty(delta) {
     const input = document.getElementById("qty-input");
     input.value = Math.max(1, (parseInt(input.value) || 1) + delta);
   }
-
-  loadProduct();
 </script>
 </body>
 </html>

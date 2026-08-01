@@ -12,15 +12,29 @@
 
 <main id="checkout-root"></main>
 
-<footer>© <span id="year"></span> متجري — جميع الحقوق محفوظة</footer>
+<footer id="site-footer"></footer>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="shared.js"></script>
 <script>
-  document.getElementById("year").textContent = new Date().getFullYear();
-  renderHeader("متجري");
-  renderCheckout();
+  let shippingRates = { cities: {}, default: 0 };
+  let storeSettings = {};
+  let appliedCoupon = null;
+  let selectedPayment = "cod";
+
+  init();
+
+  async function init() {
+    storeSettings = await bootPage({ title: "إتمام الطلب" });
+    shippingRates = await getShippingRates();
+    renderCheckout();
+  }
+
+  function currentShippingFee() {
+    const cityInput = document.getElementById("city-input");
+    return cityInput ? getShippingFee(shippingRates, cityInput.value) : 0;
+  }
 
   function renderCheckout() {
     const cart = getCart();
@@ -33,6 +47,22 @@
           <a href="index.html" class="btn btn-primary" style="display:inline-block; width:auto; padding:12px 28px;">تصفح المنتجات</a>
         </div>`;
       return;
+    }
+
+    const paymentOptions = [{ id: "cod", label: "الدفع عند الاستلام", instructions: "" }];
+    if (storeSettings.vodafoneCashEnabled) {
+      paymentOptions.push({
+        id: "vodafone",
+        label: "فودافون كاش",
+        instructions: `حوّل قيمة الطلب على رقم ${storeSettings.vodafoneCashNumber || "—"} واكتب رقم العملية في الملاحظات`
+      });
+    }
+    if (storeSettings.instapayEnabled) {
+      paymentOptions.push({
+        id: "instapay",
+        label: "إنستا باي",
+        instructions: `حوّل قيمة الطلب على ${storeSettings.instapayNumber || "—"} واكتب رقم العملية في الملاحظات`
+      });
     }
 
     root.innerHTML = `
@@ -50,26 +80,65 @@
             </div>
             <div class="field">
               <label>المحافظة</label>
-              <input type="text" name="city" required placeholder="مثال: القاهرة" />
+              <input type="text" name="city" id="city-input" required placeholder="مثال: القاهرة" list="city-list" />
+              <datalist id="city-list">
+                ${Object.keys(shippingRates.cities || {}).map((c) => `<option value="${c}">`).join("")}
+              </datalist>
             </div>
             <div class="field">
               <label>العنوان بالتفصيل</label>
               <textarea name="address" required placeholder="الحي، الشارع، رقم العقار..."></textarea>
             </div>
+
+            <div class="field">
+              <label>طريقة الدفع</label>
+              <div class="payment-options" id="payment-options">
+                ${paymentOptions
+                  .map(
+                    (opt) => `
+                  <label class="payment-option ${opt.id === selectedPayment ? "active" : ""}" data-id="${opt.id}">
+                    <input type="radio" name="payment" value="${opt.id}" ${opt.id === selectedPayment ? "checked" : ""} style="width:auto;" />
+                    ${opt.label}
+                  </label>
+                `
+                  )
+                  .join("")}
+              </div>
+              <div id="payment-instructions"></div>
+            </div>
+
+            <div class="field">
+              <label>كود الخصم (اختياري)</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="coupon-input" placeholder="اكتب الكود هنا" />
+                <button type="button" class="btn btn-outline" style="width:auto; padding:0 18px;" id="apply-coupon-btn">تطبيق</button>
+              </div>
+              <p id="coupon-msg" style="font-size:13px; margin-top:6px;"></p>
+            </div>
+
             <div class="field">
               <label>ملاحظات (اختياري)</label>
-              <textarea name="notes" placeholder="أي تفاصيل إضافية عن الطلب"></textarea>
+              <textarea name="notes" id="notes-input" placeholder="أي تفاصيل إضافية عن الطلب"></textarea>
             </div>
-            <button type="submit" class="btn btn-primary" id="submit-btn">تأكيد الطلب — الدفع عند الاستلام</button>
+            <button type="submit" class="btn btn-primary" id="submit-btn">تأكيد الطلب</button>
           </form>
         </div>
 
         <div class="panel">
           <h2>ملخص الطلب</h2>
           <div id="cart-lines"></div>
+          <div class="total-row" style="font-size:15px; font-weight:700; border-top:none; padding-top:0;">
+            <span>المنتجات</span><span id="cart-subtotal">${formatPrice(cartSubtotal())}</span>
+          </div>
+          <div class="total-row" style="font-size:15px; font-weight:700; border-top:none; padding-top:0;">
+            <span>الشحن</span><span id="cart-shipping">—</span>
+          </div>
+          <div class="total-row" id="discount-row" style="font-size:15px; font-weight:700; border-top:none; padding-top:0; display:none; color:#c0392b;">
+            <span>الخصم</span><span id="cart-discount"></span>
+          </div>
           <div class="total-row">
             <span>الإجمالي</span>
-            <span id="cart-total">${formatPrice(cartTotal())}</span>
+            <span id="cart-total">${formatPrice(cartSubtotal())}</span>
           </div>
         </div>
       </div>
@@ -77,29 +146,84 @@
 
     renderCartLines();
     document.getElementById("order-form").addEventListener("submit", submitOrder);
+    document.getElementById("city-input").addEventListener("input", updateTotals);
+
+    document.querySelectorAll(".payment-option").forEach((label) => {
+      label.addEventListener("click", () => {
+        selectedPayment = label.dataset.id;
+        document.querySelectorAll(".payment-option").forEach((l) => l.classList.toggle("active", l.dataset.id === selectedPayment));
+        renderPaymentInstructions(paymentOptions);
+      });
+    });
+    renderPaymentInstructions(paymentOptions);
+
+    document.getElementById("apply-coupon-btn").addEventListener("click", async () => {
+      const code = document.getElementById("coupon-input").value.trim();
+      const msg = document.getElementById("coupon-msg");
+      if (!code) return;
+      msg.textContent = "جارِ التحقق...";
+      const coupon = await validateCoupon(code);
+      if (!coupon) {
+        appliedCoupon = null;
+        msg.style.color = "#c0392b";
+        msg.textContent = "الكود غير صحيح أو منتهي";
+      } else {
+        appliedCoupon = coupon;
+        msg.style.color = "var(--brand-dark)";
+        msg.textContent = "تم تطبيق الكوبون بنجاح ✓";
+      }
+      updateTotals();
+    });
+
+    updateTotals();
+  }
+
+  function renderPaymentInstructions(paymentOptions) {
+    const opt = paymentOptions.find((o) => o.id === selectedPayment);
+    document.getElementById("payment-instructions").innerHTML = opt && opt.instructions
+      ? `<div class="payment-instructions">${opt.instructions}</div>` : "";
+  }
+
+  function updateTotals() {
+    const subtotal = cartSubtotal();
+    const shipping = currentShippingFee();
+    const discount = appliedCoupon ? applyCouponToTotal(subtotal, appliedCoupon) : 0;
+
+    document.getElementById("cart-subtotal").textContent = formatPrice(subtotal);
+    document.getElementById("cart-shipping").textContent = formatPrice(shipping);
+    const discountRow = document.getElementById("discount-row");
+    if (discount > 0) {
+      discountRow.style.display = "flex";
+      document.getElementById("cart-discount").textContent = "-" + formatPrice(discount);
+    } else {
+      discountRow.style.display = "none";
+    }
+    document.getElementById("cart-total").textContent = formatPrice(Math.max(0, subtotal + shipping - discount));
   }
 
   function renderCartLines() {
     const cart = getCart();
     const wrap = document.getElementById("cart-lines");
     wrap.innerHTML = cart
-      .map(
-        (i) => `
+      .map((i) => {
+        const variant = [i.color, i.size].filter(Boolean).join(" / ");
+        const eff = lineEffectivePrice(i);
+        return `
       <div class="cart-line">
         <img src="${i.image || ""}" onerror="this.style.display='none'" />
         <div class="cart-line-info">
-          <p class="cart-line-name">${i.name}</p>
-          <p class="cart-line-qty">${formatPrice(i.price)} × ${i.qty}</p>
+          <p class="cart-line-name">${i.name}${variant ? ` <span style="color:var(--text-muted); font-weight:500;">(${variant})</span>` : ""}</p>
+          <p class="cart-line-qty">${formatPrice(eff)} × ${i.qty} ${eff < i.price ? `<span style="color:var(--brand-dark);">(خصم كمية)</span>` : ""}</p>
         </div>
-        <button class="remove-btn" onclick="removeLine('${i.id}')">حذف</button>
+        <button class="remove-btn" onclick="removeLine('${i.lineId}')">حذف</button>
       </div>
-    `
-      )
+    `;
+      })
       .join("");
   }
 
-  function removeLine(id) {
-    removeFromCart(id);
+  function removeLine(lineId) {
+    removeFromCart(lineId);
     renderCheckout();
   }
 
@@ -114,36 +238,52 @@
     btn.disabled = true;
     btn.textContent = "جارِ إرسال الطلب...";
 
+    const city = form.city.value.trim();
+    const shipping = getShippingFee(shippingRates, city);
+    const subtotal = cartSubtotal();
+    const discount = appliedCoupon ? applyCouponToTotal(subtotal, appliedCoupon) : 0;
+    const paymentLabels = { cod: "الدفع عند الاستلام", vodafone: "فودافون كاش", instapay: "إنستا باي" };
+
     const order = {
       customerName: form.name.value.trim(),
       phone: form.phone.value.trim(),
-      city: form.city.value.trim(),
+      city: city,
       address: form.address.value.trim(),
       notes: form.notes.value.trim(),
       items: getCart(),
-      total: cartTotal(),
+      subtotal: subtotal,
+      shipping: shipping,
+      discount: discount,
+      couponCode: appliedCoupon ? appliedCoupon.code : null,
+      paymentMethod: paymentLabels[selectedPayment] || "الدفع عند الاستلام",
+      total: Math.max(0, subtotal + shipping - discount),
       status: "جديد",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
       await db.collection("orders").add(order);
+      trackPixelEvent("Purchase", { value: order.total, currency: "EGP" });
+      const waLink = buildWhatsAppOrderLink(order, storeSettings.whatsappNumber || "");
       clearCart();
-      showSuccess();
+      showSuccess(waLink, storeSettings.whatsappNumber);
     } catch (err) {
       alert("حصل خطأ أثناء إرسال الطلب: " + err.message);
       btn.disabled = false;
-      btn.textContent = "تأكيد الطلب — الدفع عند الاستلام";
+      btn.textContent = "تأكيد الطلب";
     }
   }
 
-  function showSuccess() {
+  function showSuccess(waLink, whatsappNumber) {
     document.getElementById("checkout-root").innerHTML = `
       <div class="success-box">
         <div class="check">✓</div>
         <h2>تم استلام طلبك بنجاح!</h2>
         <p style="color:var(--text-muted); margin-bottom:24px;">هيتم التواصل معاك قريب لتأكيد الطلب والتوصيل.</p>
-        <a href="index.html" class="btn btn-primary" style="display:inline-block; width:auto; padding:12px 28px;">تابع التسوق</a>
+        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+          ${whatsappNumber ? `<a href="${waLink}" target="_blank" class="btn btn-primary" style="display:inline-block; width:auto; padding:12px 28px; background:#25D366;">أرسل تفاصيل الطلب على واتساب</a>` : ""}
+          <a href="index.html" class="btn btn-outline" style="display:inline-block; width:auto; padding:12px 28px;">تابع التسوق</a>
+        </div>
       </div>
     `;
   }
