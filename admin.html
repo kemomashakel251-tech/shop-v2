@@ -597,6 +597,23 @@
       </div>
 
       <div class="panel" style="max-width:640px; margin-bottom:20px;">
+        <h2>مظهر الموقع</h2>
+        <p style="color:var(--text-muted); font-size:13px; margin-top:0;">غيّر ألوان ونص الموقع من هنا مباشرة بدون أي تعديل في الكود.</p>
+        <div style="display:flex; gap:16px;">
+          <div class="field" style="flex:1;">
+            <label>اللون الأساسي</label>
+            <input id="s-primaryColor" type="color" value="${s.primaryColor || "#0f6b5c"}" style="height:44px; padding:4px;" />
+          </div>
+          <div class="field" style="flex:1;">
+            <label>لون الأزرار (Accent)</label>
+            <input id="s-accentColor" type="color" value="${s.accentColor || "#ff6b4a"}" style="height:44px; padding:4px;" />
+          </div>
+        </div>
+        <div class="field"><label>عنوان البانر الرئيسي</label><input id="s-heroTitle" value="${s.heroTitle || ""}" /></div>
+        <div class="field"><label>وصف البانر الرئيسي</label><input id="s-heroSubtitle" value="${s.heroSubtitle || ""}" /></div>
+      </div>
+
+      <div class="panel" style="max-width:640px; margin-bottom:20px;">
         <h2>من نحن وسياسة الشحن</h2>
         <div class="field"><label>نص "من نحن"</label><textarea id="s-aboutText" style="min-height:100px;">${s.aboutText || ""}</textarea></div>
         <div class="field"><label>نص "سياسة الشحن والاسترجاع"</label><textarea id="s-shippingPolicyText" style="min-height:100px;">${s.shippingPolicyText || ""}</textarea></div>
@@ -638,6 +655,10 @@
         logoUrl: val("s-logoUrl"),
         seoTitle: val("s-seoTitle"),
         seoDescription: val("s-seoDescription"),
+        primaryColor: val("s-primaryColor"),
+        accentColor: val("s-accentColor"),
+        heroTitle: val("s-heroTitle"),
+        heroSubtitle: val("s-heroSubtitle"),
         aboutText: val("s-aboutText"),
         shippingPolicyText: val("s-shippingPolicyText"),
         whatsappNumber: val("s-whatsappNumber"),

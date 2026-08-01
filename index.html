@@ -10,9 +10,9 @@
 
 <header id="site-header"></header>
 
-<section class="hero">
-  <h1>كل اللي محتاجه في مكان واحد</h1>
-  <p>اطلب أونلاين واستلم في بيتك — دفع عند الاستلام</p>
+<section class="hero" id="hero-section">
+  <h1 id="hero-title">كل اللي محتاجه في مكان واحد</h1>
+  <p id="hero-subtitle">اطلب أونلاين واستلم في بيتك — دفع عند الاستلام</p>
 </section>
 
 <div class="categories" id="categories"></div>
@@ -35,7 +35,9 @@
   init();
 
   async function init() {
-    await bootPage();
+    const settings = await bootPage();
+    if (settings.heroTitle) document.getElementById("hero-title").textContent = settings.heroTitle;
+    if (settings.heroSubtitle) document.getElementById("hero-subtitle").textContent = settings.heroSubtitle;
     loadProducts();
   }
 
@@ -46,7 +48,11 @@
       return;
     }
     try {
-      allProducts = await getProductsCached();
+      allProducts = await getProductsCached((fresh) => {
+        allProducts = fresh;
+        renderCategories();
+        renderGrid();
+      });
       renderCategories();
       renderGrid();
     } catch (e) {

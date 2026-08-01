@@ -202,11 +202,16 @@ function applyCouponToTotal(subtotal, coupon) {
 /* -----------------------------------------------------------
    7) المنتجات (مع كاش لتقليل القراءات)
    ----------------------------------------------------------- */
-async function getProductsCached() {
+async function getProductsCached(onFreshData) {
   const cached = cacheGet("products_list", CACHE_TTL);
   if (cached) {
-    /* بيرجع الكاش فورًا، وبيحدثه في الخلفية بهدوء من غير ما يعطل الصفحة */
-    refreshProductsInBackground();
+    /* بيرجع الكاش فورًا (سريع)، وفي نفس الوقت بيجيب أحدث نسخة من Firestore
+       في الخلفية، ولو فيه فرق (منتج جديد/صورة اتضافت) بيبلّغ الصفحة تحدّث نفسها */
+    fetchProductsFresh()
+      .then((fresh) => {
+        if (onFreshData && JSON.stringify(fresh) !== JSON.stringify(cached)) onFreshData(fresh);
+      })
+      .catch(() => {});
     return cached;
   }
   return await fetchProductsFresh();
@@ -228,6 +233,10 @@ function clearProductsCache() { cacheClear("products_list"); }
 const SETTINGS_DEFAULTS = {
   storeName: "متجري",
   logoUrl: "",
+  primaryColor: "#0f6b5c",
+  accentColor: "#ff6b4a",
+  heroTitle: "كل اللي محتاجه في مكان واحد",
+  heroSubtitle: "اطلب أونلاين واستلم في بيتك — دفع عند الاستلام",
   seoTitle: "متجري — تسوق أونلاين",
   seoDescription: "تسوق أفضل المنتجات أونلاين بأسعار مناسبة وتوصيل سريع.",
   aboutText: "",
@@ -430,6 +439,35 @@ function setMetaTag(attr, key, value) {
   tag.setAttribute("content", value);
 }
 
+/* ---------- تطبيق ألوان الهوية من الإعدادات (بدون لمس الكود) ---------- */
+function applyTheme(settings) {
+  const root = document.documentElement;
+  if (settings.primaryColor) {
+    root.style.setProperty("--brand", settings.primaryColor);
+    root.style.setProperty("--brand-dark", shadeColor(settings.primaryColor, -18));
+    root.style.setProperty("--brand-light", shadeColor(settings.primaryColor, 85));
+  }
+  if (settings.accentColor) {
+    root.style.setProperty("--accent", settings.accentColor);
+    root.style.setProperty("--accent-dark", shadeColor(settings.accentColor, -15));
+  }
+}
+/* تفتيح/تغميق لون Hex بنسبة معينة (percent موجب = أفتح، سالب = أغمق) */
+function shadeColor(hex, percent) {
+  try {
+    const num = parseInt(hex.replace("#", ""), 16);
+    let r = (num >> 16) + Math.round(2.55 * percent);
+    let g = ((num >> 8) & 0x00ff) + Math.round(2.55 * percent);
+    let b = (num & 0x0000ff) + Math.round(2.55 * percent);
+    r = Math.max(0, Math.min(255, r));
+    g = Math.max(0, Math.min(255, g));
+    b = Math.max(0, Math.min(255, b));
+    return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
+  } catch (e) {
+    return hex;
+  }
+}
+
 /* -----------------------------------------------------------
    10) bootPage — بتشتغل في أول كل صفحة عميل (مش لوحة التحكم)
    بتجيب الإعدادات، وتبني الهيدر والفوتر، وتحقن السيو وأكواد التتبع،
@@ -437,6 +475,7 @@ function setMetaTag(attr, key, value) {
    ----------------------------------------------------------- */
 async function bootPage(opts = {}) {
   const settings = await getSettings();
+  applyTheme(settings);
   renderHeader(settings.storeName, settings.logoUrl);
   renderFooter(settings);
   applySEO(settings, opts.title ? `${opts.title} — ${settings.storeName}` : settings.seoTitle, opts.description);
