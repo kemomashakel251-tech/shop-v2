@@ -26,8 +26,8 @@ if (IS_CONFIGURED) {
    1.b) إعدادات Cloudinary (رفع صور وفيديوهات المنتجات مجانًا)
    ----------------------------------------------------------- */
 const CLOUDINARY_CONFIG = {
-  cloudName: "YOUR_CLOUD_NAME",
-  uploadPreset: "YOUR_UPLOAD_PRESET"
+  cloudName: "ux58o5sr",
+  uploadPreset: "h8wskyp1"
 };
 const CLOUDINARY_CONFIGURED = CLOUDINARY_CONFIG.cloudName !== "YOUR_CLOUD_NAME";
 

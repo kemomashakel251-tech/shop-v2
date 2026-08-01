@@ -93,10 +93,26 @@
     else loadSettings();
   }
 
+  function showAdminError(e) {
+    const main = document.getElementById("admin-main");
+    console.error(e);
+    main.innerHTML = `
+      <div class="empty" style="text-align:right; background:#fdeceb; border-radius:10px; padding:16px;">
+        <p style="color:#c0392b; font-weight:700; margin:0 0 6px;">حصل خطأ أثناء تحميل البيانات</p>
+        <p style="margin:0; font-size:13px; color:#7a2b21;">${(e && e.message) || e}</p>
+        <p style="margin:10px 0 0; font-size:13px;">
+          لو الخطأ فيه "permission-denied" يبقى قواعد Firestore (Rules) لسه مش منشورة صح — راجع خطوة 4 في README.md.<br>
+          افتح Developer Console (F12) لتفاصيل أكتر.
+        </p>
+      </div>
+    `;
+  }
+
   /* ================= الإحصائيات ================= */
   async function loadStats() {
     const main = document.getElementById("admin-main");
     main.innerHTML = `<p class="empty">جارِ التحميل...</p>`;
+    try {
     const [ordersSnap, productsSnap] = await Promise.all([
       db.collection("orders").get(),
       db.collection("products").get()
@@ -132,15 +148,18 @@
         </div>
       </div>
     `;
+    } catch (e) { showAdminError(e); }
   }
 
   /* ================= المنتجات ================= */
   async function loadProducts() {
     const main = document.getElementById("admin-main");
     main.innerHTML = `<p class="empty">جارِ التحميل...</p>`;
+    try {
     const snap = await db.collection("products").orderBy("createdAt", "desc").get();
     products = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     renderProductsTable();
+    } catch (e) { showAdminError(e); }
   }
 
   function renderProductsTable() {
@@ -310,9 +329,11 @@
   async function loadOrders() {
     const main = document.getElementById("admin-main");
     main.innerHTML = `<p class="empty">جارِ التحميل...</p>`;
+    try {
     const snap = await db.collection("orders").orderBy("createdAt", "desc").get();
     orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     renderOrdersTable();
+    } catch (e) { showAdminError(e); }
   }
 
   function renderOrdersTable() {
@@ -379,9 +400,11 @@
   async function loadCoupons() {
     const main = document.getElementById("admin-main");
     main.innerHTML = `<p class="empty">جارِ التحميل...</p>`;
+    try {
     const snap = await db.collection("coupons").get();
     coupons = snap.docs.map((d) => ({ code: d.id, ...d.data() }));
     renderCouponsTable();
+    } catch (e) { showAdminError(e); }
   }
 
   function renderCouponsTable() {
@@ -459,8 +482,10 @@
   async function loadShipping() {
     const main = document.getElementById("admin-main");
     main.innerHTML = `<p class="empty">جارِ التحميل...</p>`;
+    try {
     const doc = await db.collection("settings").doc("shipping").get();
     renderShippingForm(doc.exists ? doc.data() : { cities: {}, default: 0 });
+    } catch (e) { showAdminError(e); }
   }
 
   function renderShippingForm(data) {
@@ -505,8 +530,10 @@
   async function loadFaq() {
     const main = document.getElementById("admin-main");
     main.innerHTML = `<p class="empty">جارِ التحميل...</p>`;
+    try {
     const doc = await db.collection("settings").doc("faq").get();
     renderFaqForm((doc.exists ? doc.data().items : []) || []);
+    } catch (e) { showAdminError(e); }
   }
 
   function renderFaqForm(items) {
@@ -550,8 +577,10 @@
   async function loadSettings() {
     const main = document.getElementById("admin-main");
     main.innerHTML = `<p class="empty">جارِ التحميل...</p>`;
+    try {
     const doc = await db.collection("settings").doc("general").get();
     renderSettingsForm(doc.exists ? doc.data() : {});
+    } catch (e) { showAdminError(e); }
   }
 
   function renderSettingsForm(s) {
