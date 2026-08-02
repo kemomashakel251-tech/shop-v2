@@ -26,6 +26,7 @@
   let selectedColor = "";
   let selectedSize = "";
   let activeMediaIndex = 0;
+  let autoSlideTimer = null;
 
   init();
 
@@ -145,6 +146,11 @@
               ? `<p style="color:var(--brand-dark); font-weight:700; font-size:14px; margin:8px 0;">🎁 اشترِ ${p.qtyDiscountThreshold} قطع أو أكتر واحصل على خصم ${p.qtyDiscountPercent}%</p>`
               : ""
           }
+          ${
+            p.pdfUrl
+              ? `<p style="background:var(--brand-light); color:var(--brand-dark); padding:8px 12px; border-radius:8px; font-size:13px; font-weight:700;">📄 ده كتاب/ملف رقمي (PDF) — هيوصلك رابط التحميل بعد تأكيد الطلب</p>`
+              : ""
+          }
           <p class="product-desc">${p.description || "لا يوجد وصف لهذا المنتج."}</p>
 
           ${
@@ -200,6 +206,7 @@
 
     document.getElementById("qty-minus").onclick = () => stepQty(-1);
     document.getElementById("qty-plus").onclick = () => stepQty(1);
+    document.getElementById("qty-input").addEventListener("change", clampQty);
     document.getElementById("add-cart-btn").onclick = () => {
       if (!isAvailable()) return;
       addToCart(p, getQty(), { color: selectedColor, size: selectedSize });
@@ -222,14 +229,38 @@
         btn.addEventListener("click", () => { selectedSize = btn.dataset.size; renderProduct(); });
       });
     }
+
+    scheduleAutoSlide();
   }
 
   window.setActiveMedia = (idx) => { activeMediaIndex = idx; renderProduct(); };
 
+  function scheduleAutoSlide() {
+    clearInterval(autoSlideTimer);
+    const imgCount = (currentProduct.images || []).length;
+    if (imgCount > 1) {
+      autoSlideTimer = setInterval(() => {
+        activeMediaIndex = (activeMediaIndex + 1) % imgCount;
+        renderProduct();
+      }, 4000);
+    }
+  }
+
   function getQty() { return Math.max(1, parseInt(document.getElementById("qty-input").value) || 1); }
+  function clampQty() {
+    const input = document.getElementById("qty-input");
+    let val = Math.max(1, parseInt(input.value) || 1);
+    const max = currentProduct.maxQtyPerOrder;
+    if (max && val > max) {
+      val = max;
+      alert(`أقصى كمية للطلب الواحد ${max} قطع للعميل الواحد`);
+    }
+    input.value = val;
+  }
   function stepQty(delta) {
     const input = document.getElementById("qty-input");
     input.value = Math.max(1, (parseInt(input.value) || 1) + delta);
+    clampQty();
   }
 </script>
 </body>

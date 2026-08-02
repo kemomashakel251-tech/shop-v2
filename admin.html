@@ -196,7 +196,10 @@
     main.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
         <h2 style="margin:0;">المنتجات (${products.length})</h2>
-        <button class="btn btn-primary" style="width:auto; padding:10px 18px;" id="add-product-btn">+ إضافة منتج</button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-primary" style="width:auto; padding:10px 18px;" id="add-product-btn">+ إضافة منتج</button>
+          <button class="btn btn-outline" style="width:auto; padding:10px 18px;" id="add-book-btn">📄 + إضافة كتاب PDF</button>
+        </div>
       </div>
       ${
         products.length === 0 ? `<p class="empty">لا توجد منتجات بعد.</p>` :
@@ -219,16 +222,19 @@
       }
     `;
     document.getElementById("add-product-btn").onclick = () => openProductModal(null);
+    document.getElementById("add-book-btn").onclick = () => openProductModal(null);
   }
 
   let modalImages = [];
   let modalVideo = "";
+  let modalPdf = "";
   let modalColors = []; /* [{name, stock}] */
   let modalSizes = [];  /* [{name, stock}] */
 
   function openProductModal(product) {
     modalImages = (product && product.images) ? [...product.images] : (product && product.image ? [product.image] : []);
     modalVideo = (product && product.video) || "";
+    modalPdf = (product && product.pdfUrl) || "";
     modalColors = (product && product.colors) ? product.colors.map((c) => ({ name: c, stock: (product.colorsStock && product.colorsStock[c]) ?? 0 })) : [];
     modalSizes = (product && product.sizes) ? product.sizes.map((s) => ({ name: s, stock: (product.sizesStock && product.sizesStock[s]) ?? 0 })) : [];
 
@@ -247,6 +253,11 @@
           <div class="field">
             <label>المخزون الإجمالي (استخدمه لو المنتج من غير خيارات لون/مقاس — لو المنتج له ألوان أو مقاسات، حدد مخزون كل خيار لوحده تحت)</label>
             <input name="stock" type="number" min="0" placeholder="مثلاً 50" value="${product?.stock ?? ""}" />
+          </div>
+
+          <div class="field">
+            <label>أقصى كمية يطلبها العميل الواحد (اختياري)</label>
+            <input name="maxQtyPerOrder" type="number" min="1" placeholder="مثلاً 3 — سيبه فاضي لو مفيش حد أقصى" value="${product?.maxQtyPerOrder || ""}" />
           </div>
 
           <div class="field">
@@ -290,6 +301,13 @@
             <div id="video-preview-box" class="media-preview-list"></div>
           </div>
 
+          <div class="field">
+            <label>📄 ملف كتاب PDF (اختياري — لو المنتج ده كتاب/ملف رقمي)</label>
+            <input type="file" id="pdf-input" accept="application/pdf" />
+            <div id="pdf-progress"></div>
+            <div id="pdf-preview-box" style="margin-top:8px;"></div>
+          </div>
+
           <div class="field"><label>الوصف</label><textarea name="description">${product?.description || ""}</textarea></div>
           <div style="display:flex; gap:10px;">
             <button type="button" class="btn btn-outline" id="cancel-modal">إلغاء</button>
@@ -302,6 +320,7 @@
     overlay.querySelector("#cancel-modal").onclick = () => overlay.remove();
     renderImagePreviews(overlay);
     renderVideoPreview(overlay);
+    renderPdfPreview(overlay);
     renderTagList(overlay, "color");
     renderTagList(overlay, "size");
 
@@ -337,6 +356,20 @@
       e.target.value = "";
     });
 
+    overlay.querySelector("#pdf-input").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const progressBox = overlay.querySelector("#pdf-progress");
+      progressBox.textContent = `جارِ رفع الملف...`;
+      try {
+        const res = await uploadToCloudinary(file, (pct) => { progressBox.textContent = `جارِ رفع الملف... ${pct}%`; });
+        modalPdf = res.url;
+        renderPdfPreview(overlay);
+      } catch (err) { alert("فشل رفع الملف: " + err.message); }
+      progressBox.textContent = "";
+      e.target.value = "";
+    });
+
     overlay.querySelector("#product-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const f = e.target;
@@ -348,6 +381,7 @@
         price: parseFloat(f.price.value) || 0,
         oldPrice: f.oldPrice.value ? parseFloat(f.oldPrice.value) : null,
         stock: f.stock.value !== "" ? parseInt(f.stock.value) : null,
+        maxQtyPerOrder: f.maxQtyPerOrder.value ? parseInt(f.maxQtyPerOrder.value) : null,
         colors: modalColors.map((c) => c.name),
         colorsStock: colorsStock,
         sizes: modalSizes.map((s) => s.name),
@@ -356,6 +390,7 @@
         qtyDiscountPercent: f.qtyDiscountPercent.value ? parseFloat(f.qtyDiscountPercent.value) : null,
         images: modalImages,
         video: modalVideo,
+        pdfUrl: modalPdf,
         description: f.description.value.trim()
       };
       if (product) await db.collection("products").doc(product.id).update(data);
@@ -406,8 +441,18 @@
     const box = overlay.querySelector("#video-preview-box");
     box.innerHTML = modalVideo ? `<div class="media-thumb"><video src="${modalVideo}" muted></video><button type="button" class="media-remove" onclick="removeModalVideo()">×</button></div>` : "";
   }
+  function renderPdfPreview(overlay) {
+    const box = overlay.querySelector("#pdf-preview-box");
+    box.innerHTML = modalPdf
+      ? `<div style="display:flex; align-items:center; gap:10px; background:var(--brand-light); padding:8px 12px; border-radius:8px; font-size:13px;">
+           📄 <a href="${modalPdf}" target="_blank" style="color:var(--brand-dark); font-weight:700;">معاينة الملف المرفوع</a>
+           <button type="button" class="media-remove" style="position:static;" onclick="removeModalPdf()">×</button>
+         </div>`
+      : "";
+  }
   window.removeModalImage = (idx) => { modalImages.splice(idx, 1); renderImagePreviews(window.__adminOverlay); };
   window.removeModalVideo = () => { modalVideo = ""; renderVideoPreview(window.__adminOverlay); };
+  window.removeModalPdf = () => { modalPdf = ""; renderPdfPreview(window.__adminOverlay); };
   window.editProduct = (id) => openProductModal(products.find((p) => p.id === id));
   window.deleteProduct = async (id) => {
     if (!confirm("متأكد إنك عايز تحذف المنتج ده؟")) return;
@@ -721,6 +766,10 @@
       <div class="panel" style="max-width:640px; margin-bottom:20px;">
         <h2>التواصل الاجتماعي وواتساب</h2>
         <div class="field"><label>رقم واتساب المتجر (بصيغة دولية بدون +)</label><input id="s-whatsappNumber" value="${s.whatsappNumber || ""}" placeholder="201xxxxxxxxx" /></div>
+        <div class="field" style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="s-secondaryPhoneEnabled" ${s.secondaryPhoneEnabled ? "checked" : ""} style="width:auto;" />
+          <label style="margin:0;">إظهار خانة "رقم هاتف آخر (اختياري)" في صفحة تأكيد الطلب</label>
+        </div>
         <div class="field"><label>رابط فيسبوك</label><input id="s-facebookUrl" value="${s.facebookUrl || ""}" /></div>
         <div class="field"><label>رابط إنستجرام</label><input id="s-instagramUrl" value="${s.instagramUrl || ""}" /></div>
         <div class="field"><label>رابط تيك توك</label><input id="s-tiktokUrl" value="${s.tiktokUrl || ""}" /></div>
@@ -779,6 +828,7 @@
         aboutText: val("s-aboutText"),
         shippingPolicyText: val("s-shippingPolicyText"),
         whatsappNumber: val("s-whatsappNumber"),
+        secondaryPhoneEnabled: document.getElementById("s-secondaryPhoneEnabled").checked,
         facebookUrl: val("s-facebookUrl"),
         instagramUrl: val("s-instagramUrl"),
         tiktokUrl: val("s-tiktokUrl"),

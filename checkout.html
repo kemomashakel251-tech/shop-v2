@@ -79,6 +79,14 @@
               <label data-i18n="phone">رقم الموبايل</label>
               <input type="tel" name="phone" required pattern="[0-9]{10,15}" placeholder="01xxxxxxxxx" />
             </div>
+            ${
+              storeSettings.secondaryPhoneEnabled
+                ? `<div class="field">
+                    <label>رقم هاتف آخر (اختياري)</label>
+                    <input type="tel" name="phone2" pattern="[0-9]{10,15}" placeholder="01xxxxxxxxx" />
+                  </div>`
+                : ""
+            }
             <div class="field">
               <label data-i18n="city">المحافظة</label>
               <input type="text" name="city" id="city-input" required placeholder="مثال: القاهرة" list="city-list" />
@@ -249,6 +257,7 @@
     const order = {
       customerName: form.name.value.trim(),
       phone: form.phone.value.trim(),
+      phone2: form.phone2 ? form.phone2.value.trim() : "",
       city: city,
       address: form.address.value.trim(),
       notes: form.notes.value.trim(),
@@ -268,8 +277,9 @@
       trackPixelEvent("Purchase", { value: order.total, currency: "EGP" });
       decrementStock(order);
       const waLink = buildWhatsAppOrderLink(order, storeSettings.whatsappNumber || "");
+      const pdfLinks = order.items.filter((i) => i.pdfUrl).map((i) => ({ name: i.name, url: i.pdfUrl }));
       clearCart();
-      showSuccess(waLink, storeSettings.whatsappNumber);
+      showSuccess(waLink, storeSettings.whatsappNumber, pdfLinks);
     } catch (err) {
       alert("حصل خطأ أثناء إرسال الطلب: " + err.message);
       btn.disabled = false;
@@ -277,12 +287,20 @@
     }
   }
 
-  function showSuccess(waLink, whatsappNumber) {
+  function showSuccess(waLink, whatsappNumber, pdfLinks) {
     document.getElementById("checkout-root").innerHTML = `
       <div class="success-box">
         <div class="check">✓</div>
         <h2 data-i18n="order_success">تم استلام طلبك بنجاح!</h2>
         <p style="color:var(--text-muted); margin-bottom:24px;">هيتم التواصل معاك قريب لتأكيد الطلب والتوصيل.</p>
+        ${
+          pdfLinks && pdfLinks.length
+            ? `<div class="panel" style="max-width:420px; margin:0 auto 20px; text-align:right;">
+                <h2 style="margin-top:0; font-size:16px;">📄 ملفاتك جاهزة للتحميل</h2>
+                ${pdfLinks.map((l) => `<a href="${l.url}" target="_blank" class="btn btn-outline" style="display:block; margin-bottom:8px;">تحميل: ${l.name}</a>`).join("")}
+              </div>`
+            : ""
+        }
         <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
           ${whatsappNumber ? `<a href="${waLink}" target="_blank" class="btn btn-primary" style="display:inline-block; width:auto; padding:12px 28px; background:#25D366;">أرسل تفاصيل الطلب على واتساب</a>` : ""}
           <a href="index.html" class="btn btn-outline" style="display:inline-block; width:auto; padding:12px 28px;" data-i18n="continue_shopping">تابع التسوق</a>

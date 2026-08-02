@@ -33,9 +33,8 @@ const CLOUDINARY_CONFIGURED = CLOUDINARY_CONFIG.cloudName !== "YOUR_CLOUD_NAME";
 
 async function uploadToCloudinary(file, onProgress) {
   if (!CLOUDINARY_CONFIGURED) throw new Error("لسه معملتش ربط Cloudinary — راجع shared.js وREADME.md");
-  const isVideo = file.type.startsWith("video/");
-  const resourceType = isVideo ? "video" : "image";
-  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/${resourceType}/upload`;
+  /* "auto" بيخلي Cloudinary يحدد بنفسه نوع الملف (صورة/فيديو/PDF أو أي ملف تاني) */
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`;
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
@@ -46,7 +45,7 @@ async function uploadToCloudinary(file, onProgress) {
     xhr.onload = () => {
       try {
         const res = JSON.parse(xhr.responseText);
-        if (res.secure_url) resolve({ url: res.secure_url, type: resourceType });
+        if (res.secure_url) resolve({ url: res.secure_url, type: res.resource_type || "raw" });
         else reject(new Error((res.error && res.error.message) || "فشل الرفع"));
       } catch (e) { reject(new Error("فشل الرفع")); }
     };
@@ -118,7 +117,8 @@ function addToCart(product, qty = 1, variant = {}) {
       color: variant.color || "",
       size: variant.size || "",
       qtyDiscountThreshold: product.qtyDiscountThreshold || null,
-      qtyDiscountPercent: product.qtyDiscountPercent || null
+      qtyDiscountPercent: product.qtyDiscountPercent || null,
+      pdfUrl: product.pdfUrl || null
     });
   }
   saveCart(cart);
@@ -242,6 +242,7 @@ const SETTINGS_DEFAULTS = {
   aboutText: "",
   shippingPolicyText: "",
   whatsappNumber: "",
+  secondaryPhoneEnabled: false,
   facebookUrl: "",
   instagramUrl: "",
   tiktokUrl: "",
