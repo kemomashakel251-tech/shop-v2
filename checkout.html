@@ -43,13 +43,14 @@
     if (cart.length === 0) {
       root.innerHTML = `
         <div class="empty" style="padding:80px 20px;">
-          <p style="font-size:18px; font-weight:700; margin-bottom:16px;">السلة فاضية دلوقتي</p>
-          <a href="index.html" class="btn btn-primary" style="display:inline-block; width:auto; padding:12px 28px;">تصفح المنتجات</a>
+          <p style="font-size:18px; font-weight:700; margin-bottom:16px;" data-i18n="empty_cart">السلة فاضية دلوقتي</p>
+          <a href="index.html" class="btn btn-primary" style="display:inline-block; width:auto; padding:12px 28px;" data-i18n="browse_products">تصفح المنتجات</a>
         </div>`;
+      applyLanguage();
       return;
     }
 
-    const paymentOptions = [{ id: "cod", label: "الدفع عند الاستلام", instructions: "" }];
+    const paymentOptions = [{ id: "cod", label: t("cod"), instructions: "" }];
     if (storeSettings.vodafoneCashEnabled) {
       paymentOptions.push({
         id: "vodafone",
@@ -68,30 +69,30 @@
     root.innerHTML = `
       <div class="checkout-wrap">
         <div class="panel">
-          <h2>بيانات الطلب</h2>
+          <h2 data-i18n="checkout_title">بيانات الطلب</h2>
           <form id="order-form">
             <div class="field">
-              <label>الاسم بالكامل</label>
+              <label data-i18n="full_name">الاسم بالكامل</label>
               <input type="text" name="name" required placeholder="مثال: أحمد محمد" />
             </div>
             <div class="field">
-              <label>رقم الموبايل</label>
+              <label data-i18n="phone">رقم الموبايل</label>
               <input type="tel" name="phone" required pattern="[0-9]{10,15}" placeholder="01xxxxxxxxx" />
             </div>
             <div class="field">
-              <label>المحافظة</label>
+              <label data-i18n="city">المحافظة</label>
               <input type="text" name="city" id="city-input" required placeholder="مثال: القاهرة" list="city-list" />
               <datalist id="city-list">
                 ${Object.keys(shippingRates.cities || {}).map((c) => `<option value="${c}">`).join("")}
               </datalist>
             </div>
             <div class="field">
-              <label>العنوان بالتفصيل</label>
+              <label data-i18n="address">العنوان بالتفصيل</label>
               <textarea name="address" required placeholder="الحي، الشارع، رقم العقار..."></textarea>
             </div>
 
             <div class="field">
-              <label>طريقة الدفع</label>
+              <label data-i18n="payment_method">طريقة الدفع</label>
               <div class="payment-options" id="payment-options">
                 ${paymentOptions
                   .map(
@@ -108,36 +109,36 @@
             </div>
 
             <div class="field">
-              <label>كود الخصم (اختياري)</label>
+              <label data-i18n="coupon_code">كود الخصم (اختياري)</label>
               <div style="display:flex; gap:8px;">
                 <input type="text" id="coupon-input" placeholder="اكتب الكود هنا" />
-                <button type="button" class="btn btn-outline" style="width:auto; padding:0 18px;" id="apply-coupon-btn">تطبيق</button>
+                <button type="button" class="btn btn-outline" style="width:auto; padding:0 18px;" id="apply-coupon-btn" data-i18n="apply">تطبيق</button>
               </div>
               <p id="coupon-msg" style="font-size:13px; margin-top:6px;"></p>
             </div>
 
             <div class="field">
-              <label>ملاحظات (اختياري)</label>
+              <label data-i18n="notes">ملاحظات (اختياري)</label>
               <textarea name="notes" id="notes-input" placeholder="أي تفاصيل إضافية عن الطلب"></textarea>
             </div>
-            <button type="submit" class="btn btn-primary" id="submit-btn">تأكيد الطلب</button>
+            <button type="submit" class="btn btn-primary" id="submit-btn" data-i18n="confirm_order">تأكيد الطلب</button>
           </form>
         </div>
 
         <div class="panel">
-          <h2>ملخص الطلب</h2>
+          <h2 data-i18n="order_summary">ملخص الطلب</h2>
           <div id="cart-lines"></div>
           <div class="total-row" style="font-size:15px; font-weight:700; border-top:none; padding-top:0;">
-            <span>المنتجات</span><span id="cart-subtotal">${formatPrice(cartSubtotal())}</span>
+            <span data-i18n="subtotal">المنتجات</span><span id="cart-subtotal">${formatPrice(cartSubtotal())}</span>
           </div>
           <div class="total-row" style="font-size:15px; font-weight:700; border-top:none; padding-top:0;">
-            <span>الشحن</span><span id="cart-shipping">—</span>
+            <span data-i18n="shipping">الشحن</span><span id="cart-shipping">—</span>
           </div>
           <div class="total-row" id="discount-row" style="font-size:15px; font-weight:700; border-top:none; padding-top:0; display:none; color:#c0392b;">
-            <span>الخصم</span><span id="cart-discount"></span>
+            <span data-i18n="discount">الخصم</span><span id="cart-discount"></span>
           </div>
           <div class="total-row">
-            <span>الإجمالي</span>
+            <span data-i18n="total">الإجمالي</span>
             <span id="cart-total">${formatPrice(cartSubtotal())}</span>
           </div>
         </div>
@@ -176,6 +177,7 @@
     });
 
     updateTotals();
+    applyLanguage();
   }
 
   function renderPaymentInstructions(paymentOptions) {
@@ -264,6 +266,7 @@
     try {
       await db.collection("orders").add(order);
       trackPixelEvent("Purchase", { value: order.total, currency: "EGP" });
+      decrementStock(order);
       const waLink = buildWhatsAppOrderLink(order, storeSettings.whatsappNumber || "");
       clearCart();
       showSuccess(waLink, storeSettings.whatsappNumber);
@@ -278,14 +281,15 @@
     document.getElementById("checkout-root").innerHTML = `
       <div class="success-box">
         <div class="check">✓</div>
-        <h2>تم استلام طلبك بنجاح!</h2>
+        <h2 data-i18n="order_success">تم استلام طلبك بنجاح!</h2>
         <p style="color:var(--text-muted); margin-bottom:24px;">هيتم التواصل معاك قريب لتأكيد الطلب والتوصيل.</p>
         <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
           ${whatsappNumber ? `<a href="${waLink}" target="_blank" class="btn btn-primary" style="display:inline-block; width:auto; padding:12px 28px; background:#25D366;">أرسل تفاصيل الطلب على واتساب</a>` : ""}
-          <a href="index.html" class="btn btn-outline" style="display:inline-block; width:auto; padding:12px 28px;">تابع التسوق</a>
+          <a href="index.html" class="btn btn-outline" style="display:inline-block; width:auto; padding:12px 28px;" data-i18n="continue_shopping">تابع التسوق</a>
         </div>
       </div>
     `;
+    applyLanguage();
   }
 </script>
 </body>

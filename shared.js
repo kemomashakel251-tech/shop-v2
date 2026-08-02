@@ -468,8 +468,96 @@ function shadeColor(hex, percent) {
   }
 }
 
+/* ---------- خصم المخزون بعد نجاح الطلب (بدون سيرفر — يعتمد على قاعدة "خصم فقط" في الـ rules) ---------- */
+async function decrementStock(order) {
+  if (!IS_CONFIGURED) return;
+  try {
+    const batch = db.batch();
+    order.items.forEach((item) => {
+      const ref = db.collection("products").doc(item.id);
+      const updates = {};
+      if (item.color) updates["colorsStock." + item.color] = firebase.firestore.FieldValue.increment(-item.qty);
+      if (item.size) updates["sizesStock." + item.size] = firebase.firestore.FieldValue.increment(-item.qty);
+      if (!item.color && !item.size) updates.stock = firebase.firestore.FieldValue.increment(-item.qty);
+      batch.update(ref, updates);
+    });
+    await batch.commit();
+    clearProductsCache();
+  } catch (e) {
+    console.error("تعذّر تحديث المخزون:", e);
+  }
+}
+
 /* -----------------------------------------------------------
-   10) bootPage — بتشتغل في أول كل صفحة عميل (مش لوحة التحكم)
+   11) دعم لغتين (عربي / إنجليزي) لنصوص الواجهة الثابتة
+   ملحوظة: ده بيترجم نصوص الواجهة بس (أزرار، عناوين، تسميات)،
+   مش بيترجم اسم/وصف المنتجات اللي بتكتبها من لوحة التحكم —
+   ده هيفضل بلغة واحدة زي ما تكتبه.
+   ----------------------------------------------------------- */
+const I18N = {
+  ar: {
+    add_to_cart: "أضف للسلة", order_now: "اطلب الآن", quantity: "الكمية",
+    color: "اللون", size: "المقاس", total: "الإجمالي", subtotal: "المنتجات",
+    shipping: "الشحن", discount: "الخصم", checkout_title: "بيانات الطلب",
+    full_name: "الاسم بالكامل", phone: "رقم الموبايل", city: "المحافظة",
+    address: "العنوان بالتفصيل", notes: "ملاحظات (اختياري)", confirm_order: "تأكيد الطلب — الدفع عند الاستلام",
+    order_summary: "ملخص الطلب", empty_cart: "السلة فاضية دلوقتي", browse_products: "تصفح المنتجات",
+    continue_shopping: "تابع التسوق", order_success: "تم استلام طلبك بنجاح!",
+    coupon_code: "كود الخصم", apply: "تطبيق", payment_method: "طريقة الدفع",
+    cod: "الدفع عند الاستلام", out_of_stock: "غير متوفر", low_stock: "الكمية محدودة",
+    about_us: "من نحن", shipping_policy: "سياسة الشحن والاستبدال", all: "الكل"
+  },
+  en: {
+    add_to_cart: "Add to Cart", order_now: "Order Now", quantity: "Quantity",
+    color: "Color", size: "Size", total: "Total", subtotal: "Subtotal",
+    shipping: "Shipping", discount: "Discount", checkout_title: "Order Details",
+    full_name: "Full Name", phone: "Phone Number", city: "City",
+    address: "Full Address", notes: "Notes (optional)", confirm_order: "Confirm Order — Cash on Delivery",
+    order_summary: "Order Summary", empty_cart: "Your cart is empty", browse_products: "Browse Products",
+    continue_shopping: "Continue Shopping", order_success: "Your order has been received!",
+    coupon_code: "Coupon Code", apply: "Apply", payment_method: "Payment Method",
+    cod: "Cash on Delivery", out_of_stock: "Out of stock", low_stock: "Limited stock",
+    about_us: "About Us", shipping_policy: "Shipping & Returns Policy", all: "All"
+  }
+};
+
+function getLang() {
+  return localStorage.getItem("site_lang") || "ar";
+}
+function setLang(lang) {
+  localStorage.setItem("site_lang", lang);
+  location.reload();
+}
+function t(key) {
+  const lang = getLang();
+  return (I18N[lang] && I18N[lang][key]) || I18N.ar[key] || key;
+}
+/* بتترجم كل عنصر عليه data-i18n="key"، وبتظبط اتجاه الصفحة (RTL/LTR) */
+function applyLanguage() {
+  const lang = getLang();
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+}
+function renderLangSwitch() {
+  const header = document.querySelector(".header-inner");
+  if (!header || document.getElementById("lang-switch")) return;
+  const btn = document.createElement("button");
+  btn.id = "lang-switch";
+  btn.className = "lang-switch-btn";
+  btn.type = "button";
+  btn.textContent = getLang() === "ar" ? "EN" : "AR";
+  btn.addEventListener("click", () => setLang(getLang() === "ar" ? "en" : "ar"));
+  header.appendChild(btn);
+}
+
+/* -----------------------------------------------------------
+   12) bootPage — بتشتغل في أول كل صفحة عميل (مش لوحة التحكم)
    بتجيب الإعدادات، وتبني الهيدر والفوتر، وتحقن السيو وأكواد التتبع،
    وتظهر زرار واتساب وويدجت الأسئلة الشائعة
    ----------------------------------------------------------- */
@@ -477,6 +565,8 @@ async function bootPage(opts = {}) {
   const settings = await getSettings();
   applyTheme(settings);
   renderHeader(settings.storeName, settings.logoUrl);
+  renderLangSwitch();
+  applyLanguage();
   renderFooter(settings);
   applySEO(settings, opts.title ? `${opts.title} — ${settings.storeName}` : settings.seoTitle, opts.description);
   injectTrackingCodes(settings);
