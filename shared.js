@@ -469,7 +469,36 @@ function shadeColor(hex, percent) {
   }
 }
 
-/* ---------- خصم المخزون بعد نجاح الطلب (بدون سيرفر — يعتمد على قاعدة "خصم فقط" في الـ rules) ---------- */
+/* ---------- استرجاع المخزون لو طلب اتلغى (عكس decrementStock) ---------- */
+async function restoreStock(order) {
+  if (!IS_CONFIGURED) return;
+  try {
+    const batch = db.batch();
+    order.items.forEach((item) => {
+      const ref = db.collection("products").doc(item.id);
+      const updates = {};
+      if (item.color) updates["colorsStock." + item.color] = firebase.firestore.FieldValue.increment(item.qty);
+      if (item.size) updates["sizesStock." + item.size] = firebase.firestore.FieldValue.increment(item.qty);
+      if (!item.color && !item.size) updates.stock = firebase.firestore.FieldValue.increment(item.qty);
+      batch.update(ref, updates);
+    });
+    await batch.commit();
+    clearProductsCache();
+  } catch (e) {
+    console.error("تعذّر استرجاع المخزون:", e);
+  }
+}
+
+/* ---------- عداد الزيارات (settings/stats.visits) ---------- */
+async function trackVisit() {
+  if (!IS_CONFIGURED) return;
+  try {
+    await db.collection("settings").doc("stats").set(
+      { visits: firebase.firestore.FieldValue.increment(1) },
+      { merge: true }
+    );
+  } catch (e) {}
+}
 async function decrementStock(order) {
   if (!IS_CONFIGURED) return;
   try {
@@ -573,5 +602,6 @@ async function bootPage(opts = {}) {
   injectTrackingCodes(settings);
   renderWhatsAppFab(settings.whatsappNumber);
   getFaqItems().then((items) => renderFaqWidget(items));
+  trackVisit();
   return settings;
 }
