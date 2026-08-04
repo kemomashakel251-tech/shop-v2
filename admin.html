@@ -157,7 +157,10 @@
     `;
     const select = document.getElementById("stats-month-select");
     select.value = statsMonthFilter;
-    select.addEventListener("change", (e) => { statsMonthFilter = e.target.value; renderStatsBody(visits); });
+    select.addEventListener("change", (e) => {
+      statsMonthFilter = e.target.value;
+      try { renderStatsBody(visits); } catch (err) { showAdminError(err); }
+    });
     renderStatsBody(visits);
   }
 
@@ -863,7 +866,7 @@
         <h2>بيكسل ميتا وجوجل أناليتكس وكود الهيدر</h2>
         <div class="field"><label>Meta Pixel ID</label><input id="s-metaPixelId" value="${s.metaPixelId || ""}" placeholder="مثال: 1234567890" /></div>
         <div class="field"><label>Google Analytics ID</label><input id="s-gaId" value="${s.gaId || ""}" placeholder="مثال: G-XXXXXXX" /></div>
-        <div class="field"><label>كود هيدر مخصص (أي كود HTML/JS إضافي)</label><textarea id="s-customHeadCode" style="min-height:80px; font-family:monospace; direction:ltr; text-align:left;">${s.customHeadCode || ""}</textarea></div>
+        <div class="field"><label>كود الهيد (Head Code) — لتتبع بيكسل فيسبوك/جوجل أو أي كود تتبع إضافي</label><textarea id="s-customHeadCode" style="min-height:80px; font-family:monospace; direction:ltr; text-align:left;" placeholder="&lt;script&gt;...&lt;/script&gt;">${s.customHeadCode || ""}</textarea></div>
       </div>
 
       <button class="btn btn-primary" style="width:auto; padding:12px 28px;" id="save-settings-btn">حفظ كل الإعدادات</button>

@@ -299,14 +299,21 @@ function renderHeader(storeName, logoUrl) {
   updateCartBadge();
 }
 
+const SOCIAL_ICONS = {
+  facebook: `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.51 1.49-3.9 3.77-3.9 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.89h2.78l-.44 2.91h-2.34V22c4.78-.79 8.44-4.94 8.44-9.94z"/></svg>`,
+  instagram: `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2c-2.72 0-3.06.01-4.12.06-1.06.05-1.79.22-2.43.47-.66.26-1.22.6-1.77 1.16-.56.55-.9 1.11-1.16 1.77-.25.64-.42 1.37-.47 2.43C2 8.94 2 9.28 2 12s.01 3.06.06 4.12c.05 1.06.22 1.79.47 2.43.26.66.6 1.22 1.16 1.77.55.56 1.11.9 1.77 1.16.64.25 1.37.42 2.43.47C8.94 22 9.28 22 12 22s3.06-.01 4.12-.06c1.06-.05 1.79-.22 2.43-.47.66-.26 1.22-.6 1.77-1.16.56-.55.9-1.11 1.16-1.77.25-.64.42-1.37.47-2.43.05-1.06.06-1.4.06-4.12s-.01-3.06-.06-4.12c-.05-1.06-.22-1.79-.47-2.43-.26-.66-.6-1.22-1.16-1.77-.55-.56-1.11-.9-1.77-1.16-.64-.25-1.37-.42-2.43-.47C15.06 2.01 14.72 2 12 2zm0 1.8c2.67 0 2.99.01 4.04.06.98.04 1.51.21 1.86.34.47.18.8.4 1.15.75.35.35.57.68.75 1.15.13.35.3.88.34 1.86.05 1.05.06 1.37.06 4.04s-.01 2.99-.06 4.04c-.04.98-.21 1.51-.34 1.86-.18.47-.4.8-.75 1.15-.35.35-.68.57-1.15.75-.35.13-.88.3-1.86.34-1.05.05-1.37.06-4.04.06s-2.99-.01-4.04-.06c-.98-.04-1.51-.21-1.86-.34-.47-.18-.8-.4-1.15-.75-.35-.35-.57-.68-.75-1.15-.13-.35-.3-.88-.34-1.86C3.81 14.99 3.8 14.67 3.8 12s.01-2.99.06-4.04c.04-.98.21-1.51.34-1.86.18-.47.4-.8.75-1.15.35-.35.68-.57 1.15-.75.35-.13.88-.3 1.86-.34C9.01 3.81 9.33 3.8 12 3.8zm0 3.05a5.15 5.15 0 100 10.3 5.15 5.15 0 000-10.3zm0 8.5a3.35 3.35 0 110-6.7 3.35 3.35 0 010 6.7zm5.36-8.7a1.2 1.2 0 11-2.4 0 1.2 1.2 0 012.4 0z"/></svg>`,
+  tiktok: `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16.6 5.82c-.9-.98-1.4-2.26-1.4-3.62h-3.13v13.4a2.6 2.6 0 11-2.6-2.6c.24 0 .48.03.7.09V9.9a5.75 5.75 0 00-.7-.05A5.77 5.77 0 006 15.62a5.77 5.77 0 0011.54 0V9.36a8.8 8.8 0 004.46 1.22V7.44a5.32 5.32 0 01-5.4-1.62z"/></svg>`,
+  whatsapp: `<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 004.74 1.2h.01c5.46 0 9.9-4.45 9.9-9.91C22 6.45 17.5 2 12.04 2zm5.8 14.02c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.12.11-1.8-.12-.42-.14-.95-.3-1.64-.6-2.88-1.24-4.76-4.15-4.9-4.34-.14-.2-1.17-1.56-1.17-2.98s.75-2.11 1.02-2.4c.26-.28.57-.35.76-.35h.55c.18 0 .42-.03.65.5.24.55.8 1.9.87 2.04.07.14.12.3.02.49-.09.19-.14.3-.28.46-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.28.72 1.2 1.56 1.94 1.07.96 1.98 1.26 2.26 1.4.28.14.44.12.6-.07.16-.19.7-.81.88-1.09.19-.28.37-.23.62-.14.26.09 1.6.76 1.88.9.28.14.46.21.53.32.07.12.07.68-.16 1.36z"/></svg>`
+};
+
 function renderFooter(settings) {
   const footer = document.getElementById("site-footer");
   if (!footer) return;
   const social = [
-    settings.facebookUrl ? `<a href="${settings.facebookUrl}" target="_blank" rel="noopener">فيسبوك</a>` : "",
-    settings.instagramUrl ? `<a href="${settings.instagramUrl}" target="_blank" rel="noopener">إنستجرام</a>` : "",
-    settings.tiktokUrl ? `<a href="${settings.tiktokUrl}" target="_blank" rel="noopener">تيك توك</a>` : ""
-  ].filter(Boolean).join(" · ");
+    settings.facebookUrl ? `<a href="${settings.facebookUrl}" target="_blank" rel="noopener" title="فيسبوك">${SOCIAL_ICONS.facebook}</a>` : "",
+    settings.instagramUrl ? `<a href="${settings.instagramUrl}" target="_blank" rel="noopener" title="إنستجرام">${SOCIAL_ICONS.instagram}</a>` : "",
+    settings.tiktokUrl ? `<a href="${settings.tiktokUrl}" target="_blank" rel="noopener" title="تيك توك">${SOCIAL_ICONS.tiktok}</a>` : ""
+  ].filter(Boolean).join("");
 
   footer.innerHTML = `
     <div class="footer-links">
@@ -328,12 +335,14 @@ function renderWhatsAppFab(number) {
   a.target = "_blank";
   a.rel = "noopener";
   a.href = `https://wa.me/${number}`;
-  a.innerHTML = "💬";
+  a.innerHTML = SOCIAL_ICONS.whatsapp;
   a.title = "تواصل معنا عبر واتساب";
   document.body.appendChild(a);
 }
 
+
 function buildWhatsAppOrderLink(order, number) {
+  const pdfItems = order.items.filter((i) => i.pdfUrl);
   const lines = [
     `طلب جديد من ${order.customerName}`,
     `📱 ${order.phone}`,
@@ -350,6 +359,10 @@ function buildWhatsAppOrderLink(order, number) {
     `الإجمالي: ${formatPrice(order.total)}`
   ].filter(Boolean);
   if (order.notes) lines.push(`ملاحظات: ${order.notes}`);
+  if (pdfItems.length) {
+    lines.push("", "📄 ملفات PDF مطلوب إرسالها للعميل بعد تأكيد الدفع:");
+    pdfItems.forEach((i) => lines.push(`${i.name}: ${i.pdfUrl}`));
+  }
   return `https://wa.me/${number}?text=${encodeURIComponent(lines.join("\n"))}`;
 }
 

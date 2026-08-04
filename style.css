@@ -683,11 +683,23 @@ button { font-family: inherit; cursor: pointer; }
 .footer-social {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  font-size: 13px;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 6px;
-  color: var(--text-muted);
+  color: var(--brand-dark);
 }
+.footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.footer-social a:hover { background: var(--brand); color: #fff; }
 .hidden { display: none; }
 
 /* ---------- Footer ---------- */
@@ -705,13 +717,6 @@ button { font-family: inherit; cursor: pointer; }
   flex-wrap: wrap;
 }
 .footer-links a { font-size: 14px; font-weight: 700; color: var(--brand-dark); }
-.footer-social {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  margin-bottom: 10px;
-  font-size: 20px;
-}
 .footer-copy { color: var(--text-muted); font-size: 13px; margin: 0; }
 .logo-img { height: 28px; vertical-align: middle; margin-inline-end: 6px; border-radius: 6px; }
 
@@ -776,4 +781,61 @@ button { font-family: inherit; cursor: pointer; }
   .admin-main { padding: 16px; }
   .table { font-size: 12px; }
   .table th, .table td { padding: 8px; }
+}
+
+/* ---------- Language switch button ---------- */
+.lang-switch-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 13px;
+  font-family: "Cairo", sans-serif;
+  color: var(--brand-dark);
+  margin-inline-start: 10px;
+}
+
+/* ---------- Stock badges ---------- */
+.stock-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+.stock-badge.ok { background: var(--brand-light); color: var(--brand-dark); }
+.stock-badge.low { background: #fff3cd; color: #7a5c00; }
+.stock-badge.out { background: #fdeceb; color: #c0392b; }
+.variant-btn.out-of-stock {
+  opacity: 0.45;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+/* ---------- Admin: variant tag builder ---------- */
+.tag-builder-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.tag-builder-row input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-family: inherit; }
+.tag-builder-row input.stock-input { flex: none; width: 90px; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tag-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--brand-light);
+  color: var(--brand-dark);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.tag-chip button {
+  background: none; border: none; color: var(--brand-dark); font-size: 15px; cursor: pointer;
+}
+
+/* ---------- Logo upload preview ---------- */
+.logo-preview {
+  width: 70px; height: 70px; border-radius: 10px; object-fit: cover;
+  background: var(--brand-light); margin-top: 8px;
 }

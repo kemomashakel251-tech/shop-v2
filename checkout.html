@@ -277,9 +277,9 @@
       trackPixelEvent("Purchase", { value: order.total, currency: "EGP" });
       decrementStock(order);
       const waLink = buildWhatsAppOrderLink(order, storeSettings.whatsappNumber || "");
-      const pdfLinks = order.items.filter((i) => i.pdfUrl).map((i) => ({ name: i.name, url: i.pdfUrl }));
+      const hasPdf = order.items.some((i) => i.pdfUrl);
       clearCart();
-      showSuccess(waLink, storeSettings.whatsappNumber, pdfLinks);
+      showSuccess(waLink, storeSettings.whatsappNumber, hasPdf);
     } catch (err) {
       alert("حصل خطأ أثناء إرسال الطلب: " + err.message);
       btn.disabled = false;
@@ -287,18 +287,15 @@
     }
   }
 
-  function showSuccess(waLink, whatsappNumber, pdfLinks) {
+  function showSuccess(waLink, whatsappNumber, hasPdf) {
     document.getElementById("checkout-root").innerHTML = `
       <div class="success-box">
         <div class="check">✓</div>
         <h2 data-i18n="order_success">تم استلام طلبك بنجاح!</h2>
         <p style="color:var(--text-muted); margin-bottom:24px;">هيتم التواصل معاك قريب لتأكيد الطلب والتوصيل.</p>
         ${
-          pdfLinks && pdfLinks.length
-            ? `<div class="panel" style="max-width:420px; margin:0 auto 20px; text-align:right;">
-                <h2 style="margin-top:0; font-size:16px;">📄 ملفاتك جاهزة للتحميل</h2>
-                ${pdfLinks.map((l) => `<a href="${l.url}" target="_blank" class="btn btn-outline" style="display:block; margin-bottom:8px;">تحميل: ${l.name}</a>`).join("")}
-              </div>`
+          hasPdf
+            ? `<p style="background:var(--brand-light); color:var(--brand-dark); padding:10px 16px; border-radius:10px; font-weight:700; font-size:14px; max-width:420px; margin:0 auto 20px;">📄 سيتم إرسال ملف الـ PDF على واتساب بعد تأكيد الدفع</p>`
             : ""
         }
         <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
